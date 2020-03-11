@@ -4,7 +4,10 @@
 #include "TimeStamp.h"
 namespace webServer
 {
+    typedef void (*TimerCallback)();
     typedef void (*EventCallback)();
     typedef void (*ReadEventCallback)(TimeStamp time);
+}
+    
 }
 #endif

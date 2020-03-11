@@ -23,14 +23,16 @@ class TimeQueue : boost::noncopyable
     void cancel(TimerId timerId);
   private:
     void handRead();
+    bool insert(Timer* timer);
     EventLoop* loop_;
 
     timerfd timefd_;
     Channel timerfdChannel_;
 
-    TimerSet timerSet_;
-    ActiveTimerSet activeTimerSet_;
-    ActiveTimerSet cancelTimerSet_;
+    TimerSet timers_;
+    ActiveTimerSet activeTimers_;
+    ActiveTimerSet cancelTimers_;
+    bool callingExpiredTimers_;
 };
   
 }
