@@ -20,10 +20,12 @@ char* strerror_tl(int savedError)
 {
     return strerror_r(savedError,t_errnobuf,sizeof t_errnobuf);
 }
+
 void defaultOutput(const char* buf,int len)
 {
     fwrite(buf,1,len,stdout);
 }
+
 void defaultFlush()
 {
     fflush(stdout);
@@ -40,12 +42,13 @@ Logger::LogLevel initLogLevel()
         return Logger::DEBUG;
     }
 }
-Logger::LogLevel g_logLevel=initLogLevel();
 
+Logger::LogLevel g_logLevel=initLogLevel();
 Logger::outPutFunc g_output=defaultOutput;
 Logger::flushFunc g_flush=defaultFlush;
     
 }
+
 using namespace webServer;
 
 void Logger::Impl::formatTime()

@@ -116,6 +116,7 @@ std::vector<TimeQueue::Entry> TimeQueue::getExpired(TimeStamp now)
 }
 void TimeQueue::reset(vector<Entry>& expired,TimeStamp now)
 {
+    
     for(Entry& entry:expired)
     {
         ActiveTimer timer(entry->second,entry->second->sequence());
@@ -129,7 +130,17 @@ void TimeQueue::reset(vector<Entry>& expired,TimeStamp now)
             delete entry->second;
         }
     }
+    TimeStamp newExpired;
+    if(!timers_.empty())
+    {
+        newExpired=timers_.begin()->second->expired();
+    }
+    if(newExpired.valid())
+    {
+        resetTimerfd(newExpired);
+    }
 }
+
 bool TimeQueue::insert(Timer* timer)
 {
     loop_->assertInLoopThread();
@@ -155,11 +166,13 @@ bool TimeQueue::insert(Timer* timer)
     return earliestChanged;
 }
 
+
 void TimeQueue::addTimer(TimerCallback& cb,TimeStamp when,double interval)
 {
     Timer* timer=new Timer(cb,when,interval);
     loop_->runInLoop(boost::bind(TimeQueue::addTimerInLoop,this,timer));
 }
+
 void TimeQueue::addTimerInLoop(Timer* timer)
 {
     loop_->assertInLoopThread();

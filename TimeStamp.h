@@ -22,6 +22,7 @@ public:
     static TimeStamp now();
     TimeStamp invalid(){return TimeStamp();}
     bool operator<(const TimeStamp& time);
+    bool valid() const { return microSecondsSinceEpoch_ > 0; }
     
 private:
     //time_t microSecondsSinceEpoch_;
