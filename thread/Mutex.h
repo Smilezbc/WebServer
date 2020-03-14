@@ -39,7 +39,7 @@ public:
     {
         assert(isLockedByThisThread());
     }
-    pthread_mutex_t*getPthreadMutex()
+    pthread_mutex_t* getPthreadMutex()
     {
         return &mutex_;
     }
