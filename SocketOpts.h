@@ -88,6 +88,26 @@ void bindOrDie(int sockfd,const struct sockaddr_in& addr)
     }
 }
 
+void shutdownWrite(int sockfd)
+{
+    int res=::shutdown(sockfd,SHUT_WR);
+    if(res<0)
+    {
+        LOG_SYSERR << "sockets::shutdownWrite";
+    }
+}
+struct sockaddr_in getLocalAddr(int sockfd)
+{
+    struct sockaddr_in addr;
+    int addrLen=sizeof addr;
+    bzero(&addr,addrLen);//
+    if(::getsockname(sockfd,static_cast<SA*>(&addr),&addrLen)<0)
+    {
+        LOG_SYSERR<< "sockets::getLocalAddr";
+    }
+    return addr;
+}
+
 }
 }
 #endif

@@ -23,6 +23,7 @@ class Channel
     void enableWrite(){events_ |= kWriteEvent;update();}
     void disableWrite(){events_ &= ~kWriteEvent;update();}
     void disableAll(){events_=kNoneEvent;update();}
+    bool isWrtiing() const { return events_ & kWriteEvent;}
     EventLoop* loop(){return loop_;}
 
     int fd(){return fd_;}

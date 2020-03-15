@@ -6,6 +6,7 @@
 #include <netinet/tcp.h>
 #include <strings.h>
 
+
 using namespace webServer;
 
 void Socket::setReuseAddr(bool on)
@@ -30,4 +31,14 @@ int Socket::accept(InetAddress* peerAddr)
     }
     return connfd;
 
+}
+void Socket::shutdownWrite()
+{
+    sockets::shutdownWrite(fd_);
+}
+
+void Socket::setNoDelay(bool on)
+{
+    int optval=on?1:0;
+    ::setsockopt(fd_,IPPROTO_TCP,TCP_NODELAY,&optval,sizeof optval);
 }
