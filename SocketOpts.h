@@ -1,18 +1,38 @@
 #ifndef WEBSERVER_SOCKETOPTS_H
 #define WEBSERVER_SOCKETOPTS_H
+
 #include "logging/Logger.h"
+
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>  // snprintf
+#include <strings.h>  // bzero
+#include <sys/socket.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <endian.h>
+
 namespace webServer
 {
+
 namespace sockets
 {
 
 typedef sockaddr SA;
+const SA* sockaddr_cast(const struct sockaddr_in* addr)
+{
+  return static_cast<const SA*>(static_cast<const void*>(addr));
+}
+SA* sockaddr_cast(struct sockaddr_in* addr)
+{
+  return static_cast<SA*>(static_cast<void*>(addr));
+}
 int CreateNonBlockingOrDie()
 {
     int sockfd=::socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
     if(sockfd<0)
     {
-        LOG_SYSFATAL<<"failed in sockets::CreateNonBlockingOrDie()"
+        LOG_SYSFATAL<<"failed in sockets::CreateNonBlockingOrDie()";
     }
     setNonBlockAndCloseOnExec(sockfd);
     return sockfd;
@@ -30,14 +50,10 @@ void setNonBlockAndCloseOnExec(int sockfd)
     ::fcntl(sockfd,F_SETFD,flag);
 }
 
-void setReuseAddr(int sockfd)
-{
-    ::setSockOpts()
-}
-int accept(int sockfd,struct sockaddr_in* addr_)
+int accept(int sockfd,struct sockaddr_in* addr)
 {
     socklen_t socklen=sizeof *addr;
-    int connfd=::accept(sockfd,static_cast<SA*>(addr),socklen);
+    int connfd=::accept(sockfd,sockaddr_cast(addr),&socklen);
 
     if (connfd < 0)
     {
@@ -81,7 +97,8 @@ void sockets::close(int sockfd)
 }
 void bindOrDie(int sockfd,const struct sockaddr_in& addr)
 {
-    int res=::bind(sockfd,static_cast<const SA*>(&addr),sizeof addr);
+    
+    int res=::bind(sockfd,sockaddr_cast(&addr),sizeof addr);
     if(res<0)
     {
         LOG_SYSFATAL <<"sockets::bind()";
@@ -107,9 +124,9 @@ void listenOrDie(int sockefd)
 struct sockaddr_in getLocalAddr(int sockfd)
 {
     struct sockaddr_in addr;
-    int addrLen=sizeof addr;
+    socklen_t addrLen=sizeof addr;
     bzero(&addr,addrLen);//
-    if(::getsockname(sockfd,static_cast<SA*>(&addr),&addrLen)<0)
+    if(::getsockname(sockfd,sockaddr_cast(&addr),&addrLen)<0)
     {
         LOG_SYSERR<< "sockets::getLocalAddr";
     }

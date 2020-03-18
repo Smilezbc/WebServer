@@ -19,7 +19,7 @@ template<int Size>
 class FixedBuffer
 {
   public:
-    FixedBuffer():cur(buffer_)
+    FixedBuffer():cur_(data_)
     {
         setCookie(cookieBegin);
     }
@@ -29,7 +29,7 @@ class FixedBuffer
     }
     void append(const char* buf,int len)
     {
-        if(avil() >= len)
+        if(avail() >= len)
         {
             ::memcpy(cur_,buf,len);
             cur_+=len;
@@ -42,17 +42,17 @@ class FixedBuffer
     void add(size_t len){ cur_+=len; }
     int avail() const { return end()-cur_; }
     void setCookie(void (*cookie)()){ cookie_=cookie; }
-    void cookieBegin();
-    void cookieEnd();
 
     void debugString();//这个的作用是什么
-    std::string asString() const { return string(data_,length()); }
+    std::string asString() const { return std::string(data_,length()); }
 
   private:
-    char* end(){return data_+Size};
-    char buffer_[Size];
-    char* cur;
+    const char* end() const {return data_+Size;}
+    char data_[Size];
+    char* cur_;
     void (*cookie_)();
+    static void cookieBegin();
+    static void cookieEnd();
 };
 
 }
@@ -72,7 +72,7 @@ class LogStream
 public:
     typedef detail::FixedBuffer<detail::kSmallBufferSize> Buffer;
     typedef LogStream self;
-    void LogStream::append(const char* buf,int len)
+    void append(const char* buf,int len)
     {
         buffer_.append(buf,len);
     }

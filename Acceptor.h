@@ -17,7 +17,7 @@ class Channel;
 class Acceptor
 {
 public:
-    typedef void (*NewConnectionCallback)(int sockfd,const InetAddress& inetAddress);
+    typedef boost::function<void (int sockfd,const InetAddress&)> NewConnectionCallback;
     Acceptor(EventLoop* loop,InetAddress inetAddress);
 
     void setNewConnectionCallback(const NewConnectionCallback& cb)

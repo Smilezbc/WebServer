@@ -1,5 +1,5 @@
 #include "LogFile.h"
-#include "thread/Mutex.h"
+#include "../thread/Mutex.h"
 
 #include <assert.h>
 #include <stdio.h>

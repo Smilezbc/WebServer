@@ -1,12 +1,11 @@
 #include "Thread.h"
 
-#include <boost/weak_ptr.hpp>
-
 #include <unistd.h>
 #include <sys/prctl.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <linux/unistd.h>
+
 namespace webServer
 {
 namespace CurrentThread
@@ -17,6 +16,8 @@ namespace CurrentThread
 }
 namespace
 {
+__thread pid_t t_cacheTid=0;
+
 pid_t gettid()
 {
     return static_cast<pid_t>(::syscall(SYS_gettid));
@@ -24,10 +25,10 @@ pid_t gettid()
 struct ThreadData
 {
     webServer::Thread::ThreadFunc func_;
-    string name_;
-    weak_ptr<pid_t> wkTid_;
-    ThreadData(webServer::Thread::ThreadFunc func,string& name,shared_ptr<pid_t> pTid)
-    :func_(fun),
+    std::string name_;
+    std::weak_ptr<pid_t> wkTid_;
+    ThreadData(webServer::Thread::ThreadFunc func,std::string& name,std::shared_ptr<pid_t> pTid)
+    :func_(func),
     name_(name),
     wkTid_(pTid)
     {
@@ -35,7 +36,7 @@ struct ThreadData
     void runInThread()
     {
         pid_t tid=gettid();
-        shared_ptr<pid_t> ptid=wkTid.lock();
+	    std::shared_ptr<pid_t> ptid=wkTid_.lock();
 
         if(ptid)//如果创建子线程的父线程还存在的话，就把tid存到父线程中
         {
@@ -44,7 +45,7 @@ struct ThreadData
         }
 
         webServer::CurrentThread::t_threadName=name_.empty()?"webServerThread":name_.c_str();//保证了每个线程的t_threadName都被设置了
-        ::prctl(PR_SET_NAME, muduo::CurrentThread::t_threadName);
+        ::prctl(PR_SET_NAME, webServer::CurrentThread::t_threadName);
         func_();
         webServer::CurrentThread::t_threadName="finished";
     }
@@ -59,29 +60,29 @@ void* startThread(void* threadData)//每个thread 的主函数
 void atfork()
 {
     t_cacheTid=gettid();
-    webServer::CurrentThread::t_ThreadName="main";
+    webServer::CurrentThread::t_threadName="main";
 }
 class ThreadNameInitializer
 {
 public:
     ThreadNameInitializer()
     {
-        webServer::CurrentThread::t_ThreadName="main";
+        webServer::CurrentThread::t_threadName="main";
         pthread_atfork(nullptr,nullptr,atfork);
     }
-}
-ThreadNameInitializer init; //作用：设置主线程的t_ThreadName
+};
+ThreadNameInitializer init; //作用：设置主线程的t_threadName
 
 }
+
 using namespace webServer;
-
-Thread::Thread(Thread::Func func,const string& name)
+Thread::Thread(ThreadFunc func,const std::string& name)
   :start_(false),
   join_(false),
   pthreadId_(0),
   pTid_(new pid_t(0)),
   func_(func_),
-  name_(name);
+  name_(name)
 {
     numThread_.increment();
 }
@@ -89,7 +90,7 @@ Thread::~Thread()
 {
     if(start_ && !join_)
     {
-        pthread_detch(pthreadId_);
+        pthread_detach(pthreadId_);
     }
 }
 void Thread::start()
@@ -108,7 +109,7 @@ void Thread::join()
 {
     assert(!join_);
     join_=true;
-    pthread_join(pthreadId_);
+    pthread_join(pthreadId_,nullptr);
 }
 
 pid_t CurrentThread::tid()

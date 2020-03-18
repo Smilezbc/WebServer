@@ -72,7 +72,7 @@ void FixedBuffer<Size>::debugString()
     *cur_='\0';
 }
 
-
+static const int LogStream::kMaxNumericSize=32;
 void LogStream::staticCheck()
 {
     static_assert(kMaxNumericSize-10 > std::numeric_limits<double>::digits10);
@@ -82,9 +82,9 @@ void LogStream::staticCheck()
 }
 
 template<typename T>
-void formatInteger(T val)
+void LogStream::formatInteger(T val)
 {
-    if(buffer_.avil()>=kMaxNumericSize)
+    if(buffer_.avail()>=kMaxNumericSize)
     {
         int len=convert(buffer_.current(),val);
         buffer_.add(len);
@@ -140,7 +140,7 @@ LogStream::self& LogStream::operator<<(double val)
     
     if(buffer_.avail()>=kMaxNumericSize)
     {
-        int len=snprintf(buffer_.current,kMaxNumericSize,"%.12g",val);
+        int len=snprintf(buffer_.current(),kMaxNumericSize,"%.12g",val);
         buffer_.add(len);
     }
     return *this;
@@ -150,7 +150,7 @@ LogStream::self& LogStream::operator<<(long double val)
     
     if(buffer_.avail()>=kMaxNumericSize)
     {
-        int len=snprintf(buffer_.current,kMaxNumericSize,"%.12g",val);
+        int len=snprintf(buffer_.current(),kMaxNumericSize,"%.12g",val);
         buffer_.add(len);
     }
     return *this;
@@ -168,7 +168,8 @@ LogStream::self& LogStream::operator<<(void* p)
 template<typename T>
 Fmt::Fmt(const char* fmt,T val)
 {
-    BOOST_STATIC_ASSERT(boost::is_arithmetic<T>::value == true);
+    static_assert(boost::is_arithmetic<T>::value == true);
+    //static_assert(boost::is_arithmetic<T>::value == true);
     len_ = snprintf(data_,sizeof data_,fmt,val);
     assert(static_cast<size_t>(len_)<sizeof data);
 }

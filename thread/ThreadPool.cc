@@ -1,13 +1,13 @@
 #include "ThreadPool.h"
 #include "Exception.h"
 
-#include <boost/bind.hpp>
 #include <assert.h>
 #include <stdio.h>
+#include<functional>
 
 using namespace webServer;
 
-ThreadPool::ThreadPool(std::string name)
+ThreadPool::ThreadPool(const std::string& name)
   :mutex_(),
   cond_(mutex_),
   name_(name),
@@ -23,15 +23,15 @@ ThreadPool::~ThreadPool()
 }
 void ThreadPool::start(int numThread)
 {
-    assert(threads.empty());
+    assert(threads_.empty());
     running_ = true;
-    threads_.reserve(numThreads);
+    threads_.reserve(numThread);
     for(int i=0;i<numThread;++i)
     {
         char id[32];
         snprintf(id,sizeof id,"%d",i);
-        threads_.push_back(new Thread(boost::bind(ThreadPool::runInthread,this),name_+id));
-        threads[i].start();
+        threads_.push_back(new Thread(std::bind(ThreadPool::runInThread,this),name_+id));
+        threads_[i].start();
     }
 }
 
@@ -72,34 +72,34 @@ void ThreadPool::stop()
 {
     running_=false;
     cond_.notifyAll();
-    for_each(threads.begin(),threads.end(),boost::bind(Thread::join,_1));
+    std::for_each(threads_.begin(),threads_.end(),std::bind(Thread::join,1));
 }
 
 ThreadPool::Task ThreadPool::take()
 {
-    MutexLockGuard lock;
-    while(tasks.empty() && running_)
+    MutexLockGuard lock(mutex_);
+    while(tasks_.empty() && running_)
     {
         cond_.wait();
     }
     Task task;
-    if(!task_.empty())
+    if(!tasks_.empty())
     {
         task=tasks_.front();
         tasks_.pop();
     }
     return task;
 }
-void ThreadPool::run(Task& task)
+void ThreadPool::run(const Task& task)
 {
-    if(threads.emtpy())
+    if(threads_.empty())
     {
         task();
     }
     else
     {
         MutexLockGuard lock(mutex_);
-        tasks.push(task);
+        tasks_.push(task);
         cond_.notify();
     }
 }

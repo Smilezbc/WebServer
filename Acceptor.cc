@@ -1,6 +1,6 @@
 #include "Acceptor.h"
 
-#include "logging/Logging.h"
+#include "logging/Logger.h"
 #include "EventLoop.h"
 #include "InetAddress.h"
 #include "SocketsOps.h"
@@ -45,7 +45,6 @@ void Acceptor::handleRead()
         {
             sockets::close(connfd);
         }
-        
     }
 }
 

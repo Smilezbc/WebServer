@@ -1,14 +1,14 @@
 #ifndef WEBSERVER_THREADPOOL_H
 #define WEBSERVER_THREADPOOL_H
-#include "Condition.h"
+
 #include "Mutex.h"
+#include "Condition.h"
 #include "Thread.h"
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/ptr_container/ptr_vector.hpp>
-
-#include <deque>
+#include <queue>
 namespace webServer
 {
 
@@ -25,16 +25,16 @@ public:
     void run(const Task& task);
 private:
 
-    void runInthread();
+    void runInThread();
     Task take();
 
     MutexLock mutex_;
     Condition cond_;
-    string name_;
+    std::string name_;
     boost::ptr_vector<Thread> threads_;
-    queue<Task> tasks_;
+    std::queue<Task> tasks_;
     bool running_;
-}
+};
     
 }
 #endif

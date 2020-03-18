@@ -1,14 +1,15 @@
 #ifndef WEBSERVER_MUTEXLOCK_H
 #define WEBSERVER_MUTEXLOCK_H
 
-#include "thread/Thread.h"
+#include "Thread.h"
 
-#include<boost/noncopyable.hpp>
+#include <boost/noncopyable.hpp>
 #include <assert.h>
 #include <pthread.h>
 
-namespace WebServer
+namespace webServer
 {
+
 class MutexLock:boost::noncopyable
 {
 public:
@@ -20,7 +21,7 @@ public:
     ~MutexLock()
     {
         assert(holder_==0);
-        pthread_mutex_destory(&mutex_)
+        pthread_mutex_destroy(&mutex_);
     }
 
     //
@@ -69,6 +70,7 @@ public:
 private:
     MutexLock& mutex_;
 };
+
 }
 //
 #define MutexLockGuard(x) static_assert("missing mutexguard var name")

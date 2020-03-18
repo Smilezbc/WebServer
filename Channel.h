@@ -3,8 +3,8 @@
 
 #include "Callbacks.h"
 
-using namespace webServer;
-
+namespace webServer
+{
 
 class Channel
 {
@@ -55,4 +55,7 @@ class Channel
     static const int kWriteEvent;
 
 };
+  
+}
+
 #endif
