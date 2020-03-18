@@ -22,6 +22,7 @@ void HttpServer::setNumThread(int numThread)
 
 void HttpServer::start()
 {
+    LOG_WARN << "HttpServer starts listenning on " << server_.name();
     server_.start();
 }
 
