@@ -32,6 +32,10 @@ int Socket::accept(InetAddress* peerAddr)
     return connfd;
 
 }
+void Socket::listen()
+{
+    sockets::listenOrDie(fd_);
+}
 void Socket::shutdownWrite()
 {
     sockets::shutdownWrite(fd_);

@@ -99,7 +99,9 @@ public:
         readableIndex_=kCheapPrePend;
         writeableIndex_=kCheapPrePend+readable;
     }
+    const char* findCRLF();
     void readfd(int fd,int*savedErrno);
+
 private:
     char* begin(){return &*buffer_.begin();}
     const char* begin() const {return &*buffer_.begin();}
@@ -120,6 +122,7 @@ private:
     vector<char> buffer_;
     int readableIndex_;
     int writeableIndex_;
+    static const char kCRLF[];
 }
 
 }

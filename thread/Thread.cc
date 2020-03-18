@@ -79,7 +79,7 @@ Thread::Thread(Thread::Func func,const string& name)
   :start_(false),
   join_(false),
   pthreadId_(0),
-  ptid_(new pid_t(0)),
+  pTid_(new pid_t(0)),
   func_(func_),
   name_(name);
 {

@@ -24,6 +24,8 @@ ThreadPool::~ThreadPool()
 void ThreadPool::start(int numThread)
 {
     assert(threads.empty());
+    running_ = true;
+    threads_.reserve(numThreads);
     for(int i=0;i<numThread;++i)
     {
         char id[32];
@@ -33,7 +35,7 @@ void ThreadPool::start(int numThread)
     }
 }
 
-void ThreadPool::runInLoop()
+void ThreadPool::runInThread()
 {
     try
     {
@@ -96,6 +98,7 @@ void ThreadPool::run(Task& task)
     }
     else
     {
+        MutexLockGuard lock(mutex_);
         tasks.push(task);
         cond_.notify();
     }

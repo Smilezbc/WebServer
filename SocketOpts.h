@@ -96,6 +96,14 @@ void shutdownWrite(int sockfd)
         LOG_SYSERR << "sockets::shutdownWrite";
     }
 }
+void listenOrDie(int sockefd)
+{
+    int res=::listen(sockefd,SOMAXCONN);
+    if(res<0)
+    {
+        LOG_SYSFATAL<<"sockets::listenOrDie";
+    }
+}
 struct sockaddr_in getLocalAddr(int sockfd)
 {
     struct sockaddr_in addr;

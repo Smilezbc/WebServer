@@ -16,6 +16,7 @@ public:
     void setReuseAddr(bool on);
     void bindAddr(InetAddress inetAddr);
     int accept(InetAddress* inetAddr);
+    void listen();
     void shutdownWrite();
     void setNoDelay(bool on);
 private:

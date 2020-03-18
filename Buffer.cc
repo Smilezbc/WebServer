@@ -1,6 +1,8 @@
 #include "Buffer.h"
 using namespace webServer;
 
+char Buffer::kCRLF[] = "\r\n";
+
 size_t Buffer::readfd(int fd,int* saveErrno)
 {
     char extrbuff[65536];
@@ -24,4 +26,17 @@ size_t Buffer::readfd(int fd,int* saveErrno)
         writeableIndex_+=n;
     }
     return n;
+}
+const Buffer::char* findCRLF();
+{
+    const char* crlf=std::search(peek(),beginWrite(),kCRLF,kCRLF+2);
+    if(crlf!=beginWrite())
+    {
+        return crlf;
+    }
+    else
+    {
+        return nullptr;
+    }
+    
 }

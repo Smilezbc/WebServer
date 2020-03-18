@@ -29,8 +29,10 @@ public:
     EventLoop* getLoop(){ return loop_;}
     const std::string& name(){ return name_;}
     const StateE& state(){ return state_;}
-
-    void setState(StateE& state) { return state_=state; }
+    const InetAddress& localAddr() { return localAddress_;}
+    const InetAddress& peerAddr() { return peerAddress_; }
+    bool connected() { return state_ == kConnected; }
+    
 
     void setConnectionCallback(ConnectionCallback& cb){ connectionCallback_ = cb; }
     void setMessageCallback(MessageCallback&cb) { messageCallback_ = cb; }
@@ -39,8 +41,12 @@ public:
 
     void send(const string& message); 
     void shutdown();
+    void setTcpNoDelay(bool on);
     void connectEstablished();
     void connectDestroyed();
+    const boost::any& getContext() const{ return context_; };
+    boost::any* getMutableContext(){ return &context_; };
+    void setContext(boost::any& context) { context_=context;};
 private:
 
     void handleRead(TimeStamp recieveTime);
@@ -48,6 +54,7 @@ private:
     void handleClose();
     void handleError();
 
+    void setState(StateE& state) { return state_=state; }
     void sendInLoop(const string& message);
     void shutdownInLoop();
 
@@ -66,6 +73,7 @@ private:
     MessageCallback messageCallback_;
     WriteCompleteCallback  writeCompleteCallback_;
     CloseCallback closeCallback_;
+    boost::any context_;
 
 };
 
