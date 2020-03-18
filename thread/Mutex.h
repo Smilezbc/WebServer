@@ -1,6 +1,12 @@
 #ifndef WEBSERVER_MUTEXLOCK_H
 #define WEBSERVER_MUTEXLOCK_H
-#include<boost/noncopyable>
+
+#include "thread/Thread.h"
+
+#include<boost/noncopyable.hpp>
+#include <assert.h>
+#include <pthread.h>
+
 namespace WebServer
 {
 class MutexLock:boost::noncopyable
@@ -9,7 +15,7 @@ public:
     MutexLock():holder_(0)
     {
         //pthread_mutex_init(&mutex_,nullptr);
-        pthread_mutex_init(&mutex_);
+        pthread_mutex_init(&mutex_,nullptr);
     }
     ~MutexLock()
     {

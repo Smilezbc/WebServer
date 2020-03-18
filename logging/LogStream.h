@@ -1,8 +1,14 @@
 #ifndef WEBSERVER_LOGSTREAM_H
 #define WEBSERVER_LOGSTREAM_H
+
 #include<boost/noncopyable.hpp>
+#include<string>
+#include<cstring>
+#include<cassert>
+
 namespace webServer
 {
+
 namespace detail
 {
 
@@ -40,24 +46,27 @@ class FixedBuffer
     void cookieEnd();
 
     void debugString();//这个的作用是什么
-    string asString() const { return string(data_,length()); }
+    std::string asString() const { return string(data_,length()); }
 
   private:
     char* end(){return data_+Size};
     char buffer_[Size];
     char* cur;
     void (*cookie_)();
+};
+
 }
-}
-struct T //这个类的作用是什么呢
+
+struct T 
 {
     T(char* str,int len):str_(str),len_(len)
     {
-        assert(len==strlen(buf));
+        assert(len==strlen(str));
     }
     char* str_;
     size_t len_;
-}
+};
+
 class LogStream
 {
 public:
@@ -94,15 +103,15 @@ public:
 
     self& operator<<(void* p);
 
-    self& operator<<(const string& s)
+    self& operator<<(const std::string& s)
     {
         buffer_.append(s.c_str(),s.size());
         return *this;
     }
     
-    self& operator<<(const T& s)
+    self& operator<<(const T& t)
     {
-        buffer_.append(T.str_,T.len_);
+        buffer_.append(t.str_, t.len_);
         return *this;
     }
 
@@ -113,7 +122,7 @@ private:
     void formatInteger(T val);
     Buffer buffer_;
     static const int kMaxNumericSize=32;
-}
+};
 
 class Fmt //这个类的作用:将数值类型变量按用户自定义的方法格式化成字符串
 {
@@ -121,15 +130,16 @@ class Fmt //这个类的作用:将数值类型变量按用户自定义的方法�
     template<typename T>
     Fmt(const char* fmt,T val);
     const char* data() const { return data_;}
-    size_t length() const { return len_};
+    size_t length() const { return len_;}
   private:
     char* data_;
     int len_;
-}
+};
 inline LogStream& operator<<(LogStream& s,const Fmt& fmt)
 {
     s.append(fmt.data(),fmt.length());
     return s;
 }
+
 }
 #endif

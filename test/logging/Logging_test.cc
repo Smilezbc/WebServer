@@ -1,11 +1,11 @@
-#include "Logging.h"
-#include "LogFile.h"
-
+#include "../../logging/Logger.h"
+#include "../../logging/LogFile.h"
+#include "../../Timestamp.h"
 #include <stdio.h>
 
 long g_total;
 FILE* g_file;
-boost::scoped_ptr<muduo::LogFile> g_logFile;
+boost::scoped_ptr<webServer::LogFile> g_logFile;
 
 void dummyOutput(const char* msg, int len)
 {
@@ -22,14 +22,14 @@ void dummyOutput(const char* msg, int len)
 
 void bench()
 {
-  muduo::Logger::setOutput(dummyOutput);
-  muduo::Timestamp start(muduo::Timestamp::now());
+  webServer::Logger::setOutput(dummyOutput);
+  webServer::Timestamp start(webServer::Timestamp::now());
   g_total = 0;
 
   const int batch = 1000*1000;
   const bool kLongLog = false;
-  muduo::string empty = " ";
-  muduo::string longStr(3000, 'X');
+  std::string empty = " ";
+  std::string longStr(3000, 'X');
   longStr += " ";
 
   for (int i = 0; i < batch; ++i)
@@ -38,7 +38,7 @@ void bench()
              << (kLongLog ? longStr : empty)
              << i;
   }
-  muduo::Timestamp end(muduo::Timestamp::now());
+  webServer::Timestamp end(webServer::Timestamp::now());
   double seconds = timeDifference(end, start);
   printf("%f seconds, %ld bytes, %.2f msg/s, %.2f MiB/s\n",
          seconds, g_total, batch / seconds, g_total / seconds / 1024 / 1024);
@@ -52,10 +52,10 @@ int main()
   LOG_INFO << "Hello";
   LOG_WARN << "World";
   LOG_ERROR << "Error";
-  LOG_INFO << sizeof(muduo::Logger);
-  LOG_INFO << sizeof(muduo::LogStream);
-  LOG_INFO << sizeof(muduo::Fmt);
-  LOG_INFO << sizeof(muduo::LogStream::Buffer);
+  LOG_INFO << sizeof(webServer::Logger);
+  LOG_INFO << sizeof(webServer::LogStream);
+  LOG_INFO << sizeof(webServer::Fmt);
+  LOG_INFO << sizeof(webServer::LogStream::Buffer);
 
   bench();
 
@@ -72,10 +72,10 @@ int main()
   fclose(g_file);
 
   g_file = NULL;
-  g_logFile.reset(new muduo::LogFile("test_log", 500*1000*1000));
+  g_logFile.reset(new webServer::LogFile("test_log", 500*1000*1000));
   bench();
 
-  g_logFile.reset(new muduo::LogFile("test_log_mt", 500*1000*1000, true));
+  g_logFile.reset(new webServer::LogFile("test_log_mt", 500*1000*1000, true));
   bench();
   g_logFile.reset();
 }

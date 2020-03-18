@@ -1,10 +1,12 @@
 #include "Logger.h"
+#include "thread/Thread.h"
 
+#include<cstring>
 
 namespace webServer
 {
-__thread char* t_errnobuf[512];
-__thread char* t_time[32];
+__thread char t_errnobuf[512];
+__thread char t_time[32];
 __thread time_t t_lastSecond;
 
 const char* logLevelName[]=
@@ -16,7 +18,7 @@ const char* logLevelName[]=
     "ERROR ",
     "FATAL "
 };
-char* strerror_tl(int savedError)
+const char* strerror_tl(int savedError)
 {
     return strerror_r(savedError,t_errnobuf,sizeof t_errnobuf);
 }
@@ -61,25 +63,25 @@ void Logger::Impl::formatTime()
         t_lastSecond=seconds;
         struct tm tm_;
         ::gmtime_r(&seconds,&tm_);
-        //snprintf(t_time,sizeof t_time,"%04d%02d%02d %02d:%02d:%02d",tm_);
         int len = snprintf(t_time, sizeof(t_time), "%4d%02d%02d %02d:%02d:%02d",
-        tm_time.tm_year + 1900, tm_time.tm_mon + 1, tm_time.tm_mday,
-        tm_time.tm_hour, tm_time.tm_min, tm_time.tm_sec);
+        tm_.tm_year + 1900, tm_.tm_mon + 1, tm_.tm_mday,
+        tm_.tm_hour, tm_.tm_min, tm_.tm_sec);
         assert(len==17);
     }
     Fmt fmt(".06dZ ",microSeconds);
     stream_<<T(t_time,17)<<fmt;
 }
-Logger::Impl(LogLevel level,int savedErrno,char* file,int line)
+
+Logger::Impl::Impl(LogLevel level,int savedErrno,const char* file,int line)
    :stream_(),
-   time_(TimeStamp::now()),
+   time_(Timestamp::now()),
    level_(level),
    fullName_(file),
    baseName_(nullptr),
    line_(line)
 {
-    char* pos_seq=strrchr(fullName_,'/');
-    baseName_=pos_seq!=nullptr?pos_seq+1,fullName_;
+    const char* pos_seq=strrchr(fullName_,'/');
+    baseName_= (pos_seq != nullptr ? pos_seq+1 : fullName_) ;
 
     formatTime();
     // int tid=gettid();
@@ -88,35 +90,34 @@ Logger::Impl(LogLevel level,int savedErrno,char* file,int line)
     stream_<<tid<<logLevelName[level_];
     if(savedErrno!=0)
     {
-        //stream_<<strerror_tl(savedErrno);
         stream_ << strerror_tl(savedErrno) << " (errno=" << savedErrno << ") ";
     }
 }
-Logger(char*file,int line)
-   :impl_(INFO,0,file,line);
+Logger::Logger(const char* file,int line)
+   :impl_(INFO,0,file,line)
 {
 }
-Logger(LogLevel level,char*file,int line)
-   :impl_(level,0,file,line);
+Logger::Logger(const char* file,int line,LogLevel level)
+   :impl_(level,0,file,line)
 {
 }
-Logger(LogLevel level,char*file,int line,char* func)
-   :impl_(level,0,file,line);
+Logger::Logger(const char* file,int line,LogLevel level,const char* func)
+   :impl_(level,0,file,line)
 {
-    impl_.stream<<func<<' ';
+    impl_.stream_<<func<<' ';
 }
-Logger(char*file,int line,bool toAbort)
-   :impl_(toAbort?FATAL:ERROR,errno,file,line);
+Logger::Logger(const char* file,int line,bool toAbort)
+   :impl_(toAbort?FATAL:ERROR,errno,file,line)
 {
 }
 void Logger::Impl::finish()
 {
-    stream_<<" - "<<basename_<<':'<<line_<<'\n';
+    stream_<<" - "<<baseName_<<':'<<line_<<'\n';
 }
 Logger::~Logger()
 {
     impl_.finish();
-    LogStream::Buffer& buf(stream().buffer());
+    const LogStream::Buffer& buf(stream().buffer());
     g_output(buf.data(),buf.length());
     if(impl_.level_==FATAL)
     {

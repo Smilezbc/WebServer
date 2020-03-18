@@ -1,7 +1,9 @@
 #ifndef WEBSERVER_LOGGER_H
 #define WEBSERVER_LOGGER_H
+
 #include "LogStream.h"
-#include "TimeStamp.h"
+#include "../Timestamp.h"
+
 namespace webServer
 {
 class Logger
@@ -17,10 +19,10 @@ public:
         FATAL,
         NUM_LOG_LEVELS
     };
-    Logger(char* file,int line);
-    Logger(LogLevel level,char* file,int line);
-    Logger(LogLevel level,char* file,int line,char* func);
-    Logger(char* file,int line,bool toAbort);
+    Logger(const char* file,int line);
+    Logger(const char* file,int line,LogLevel level);
+    Logger(const char* file,int line,LogLevel level,const char* func);
+    Logger(const char* file,int line,bool toAbort);
 
     LogStream& stream(){ return impl_.stream_;}
 
@@ -28,8 +30,8 @@ public:
     typedef void (*flushFunc)();
     static LogLevel logLevel();
     static void setLogLevel(LogLevel level);
-    static void setOutput(outPutFun func);
-    static void setFlush(flushFun func);
+    static void setOutput(outPutFunc func);
+    static void setFlush(flushFunc func);
 private:
     class Impl
     {
@@ -39,26 +41,29 @@ private:
         void finish();
 
         LogStream stream_;
-        TimeStamp time_;
-        LogLevel level;
-        char* fullname;
-        char* basename;
-        int line;
-    }
+        Timestamp time_;
+        LogLevel level_;
+        const char* fullName_;
+        const char* baseName_;
+        int line_;
+    };
     Impl impl_;
+    static const int kMicroSecondsPerSecond=1000*1000;
 };
-#define LOG_TRACE webServer::Logger(webServer::Logger::TRACE,__FILE__,__LINE__,__func__).steram()
-#define LOG_DEBUG webServer::Logger(webServer::Logger::DEBUG,__FILE__,__LINE__,__func__).steram()
 
-#define LOG_INFO webServer::Logger(__FILE__,__LINE__).steram()
+#define LOG_TRACE webServer::Logger(__FILE__,__LINE__,webServer::Logger::TRACE,__func__).stream()
+#define LOG_DEBUG webServer::Logger(__FILE__,__LINE__,webServer::Logger::DEBUG,__func__).stream()
 
-#define LOG_WARN webServer::Logger(webServer::Logger::WARN,__FILE__,__LINE__).steram()
-#define LOG_ERROR webServer::Logger(webServer::Logger::ERROR,__FILE__,__LINE__).steram()
-#define LOG_FATAL webServer::Logger(webServer::Logger::FATAL,__FILE__,__LINE__).steram()
+#define LOG_INFO webServer::Logger(__FILE__,__LINE__).stream()
 
-#define LOG_SYSERR webServer::Logger(__FILE__,__LINE__,false).steram()
-#define LOG_SYSFATAL webServer::Logger(__FILE__,__LINE__,true).steram()
+#define LOG_WARN webServer::Logger(__FILE__,__LINE__,webServer::Logger::WARN).stream()
+#define LOG_ERROR webServer::Logger(__FILE__,__LINE__,webServer::Logger::ERROR).stream()
+#define LOG_FATAL webServer::Logger(__FILE__,__LINE__,webServer::Logger::FATAL).stream()
+
+#define LOG_SYSERR webServer::Logger(__FILE__,__LINE__,false).stream()
+#define LOG_SYSFATAL webServer::Logger(__FILE__,__LINE__,true).stream()
 
 const char* strerror_tl(int savedErrno);
 }
+
 #endif

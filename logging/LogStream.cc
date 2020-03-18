@@ -1,9 +1,13 @@
 #include "LogStream.h"
+
+#include<algorithm>
+
 using namespace webServer;
 using namespace webServer::detail;
+
 namespace webServer
 {
-namespaec detail
+namespace detail
 {
 const char digits[]="9876543210123456789";
 const char* zero=digits+9;
@@ -49,21 +53,21 @@ int convertHex(char *buf,uintptr_t val)
 }
 
 //限制 模板类FixBuffer只能实例化成下面两种尺寸
-template class FixedBuffer<kSmallBuffer>;
-template class FixedBuffer<kLargeBuffer>;
+template class FixedBuffer<detail::kSmallBufferSize>;
+template class FixedBuffer<detail::kLargeBufferSize>;
 template<int Size>
-void FixedBuffer::cookieBegin()
+void FixedBuffer<Size>::cookieBegin()
 {
 
 }
 
 template<int Size>
-void FixedBuffer::cookieEnd()
+void FixedBuffer<Size>::cookieEnd()
 {
 
 }
 template<int Size>
-void FixedBuffer::debugString()
+void FixedBuffer<Size>::debugString()
 {
     *cur_='\0';
 }
@@ -71,10 +75,10 @@ void FixedBuffer::debugString()
 
 void LogStream::staticCheck()
 {
-    BOOST_STATIC_ASSERT(kMaxNumericSize-10 > std::numeric_limits<double>::digits10)
-    BOOST_STATIC_ASSERT(kMaxNumericSize-10 > std::numeric_limits<long double>::digits10)
-    BOOST_STATIC_ASSERT(kMaxNumericSize-10 > std::numeric_limits<long>::digits10)
-    BOOST_STATIC_ASSERT(kMaxNumericSize-10 > std::numeric_limits<long long>::digits10)
+    static_assert(kMaxNumericSize-10 > std::numeric_limits<double>::digits10);
+    static_assert(kMaxNumericSize-10 > std::numeric_limits<long double>::digits10);
+    static_assert(kMaxNumericSize-10 > std::numeric_limits<long>::digits10);
+    static_assert(kMaxNumericSize-10 > std::numeric_limits<long long>::digits10);
 }
 
 template<typename T>
@@ -86,72 +90,72 @@ void formatInteger(T val)
         buffer_.add(len);
     }
 }
-self& LogStream::operator<<(short val)
+LogStream::self& LogStream::operator<<(short val)
 {
     *this<<static_cast<int>(val);
     return *this;
 }
-self& LogStream::operator<<(unsigned short val)
+LogStream::self& LogStream::operator<<(unsigned short val)
 {
     *this<<static_cast<unsigned int>(val);
     return *this;
 }
-self& LogStream::operator<<(int val)
+LogStream::self& LogStream::operator<<(int val)
 {
     formatInteger(val);
     return *this;
 }
-self& LogStream::operator<<(unsigned int val)
+LogStream::self& LogStream::operator<<(unsigned int val)
 {
     formatInteger(val);
     return *this;
 }
-self& LogStream::operator<<(long val)
+LogStream::self& LogStream::operator<<(long val)
 {
     formatInteger(val);
     return *this;
 }
-self& LogStream::operator<<(unsigned long val)
+LogStream::self& LogStream::operator<<(unsigned long val)
 {
     formatInteger(val);
     return *this;
 }
-self& LogStream::operator<<(long long  val)
+LogStream::self& LogStream::operator<<(long long  val)
 {
     formatInteger(val);
     return *this;
 }
-self& LogStream::operator<<(unsigned long long val)
+LogStream::self& LogStream::operator<<(unsigned long long val)
 {
     formatInteger(val);
     return *this;
 }
-self& LogStream::operator<<(float val)
+LogStream::self& LogStream::operator<<(float val)
 {
     (*this)<<static_cast<double>(val);
     return *this;
 }
-self& LogStream::operator<<(double val)
+LogStream::self& LogStream::operator<<(double val)
 {
     
-    if(buffer_.avil()>=kMaxNumericSize)
+    if(buffer_.avail()>=kMaxNumericSize)
     {
         int len=snprintf(buffer_.current,kMaxNumericSize,"%.12g",val);
         buffer_.add(len);
     }
-    return &this;
+    return *this;
 }
-self& LogStream::operator<<(long double val)
+LogStream::self& LogStream::operator<<(long double val)
 {
     
-    if(buffer_.avil()>=kMaxNumericSize)
+    if(buffer_.avail()>=kMaxNumericSize)
     {
         int len=snprintf(buffer_.current,kMaxNumericSize,"%.12g",val);
         buffer_.add(len);
     }
-    return &this;
+    return *this;
 }
-self& LogStream::operator<<(const void* p)
+LogStream::self& LogStream::operator<<(void* p)
 {
     uintptr_t val = reinterpret_cast<uintptr_t>(p);
     char* buf=buffer_.current();

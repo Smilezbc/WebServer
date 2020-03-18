@@ -1,7 +1,10 @@
-#include "LogFile.h"
-#include "Logging.h"
+#include "../../logging/LogFile.h"
+#include "../../logging/Logger.h"
 
-boost::scoped_ptr<muduo::LogFile> g_logFile;
+#include<cstring>
+#include<string>
+
+boost::scoped_ptr<webServer::LogFile> g_logFile;
 
 void outputFunc(const char* msg, int len)
 {
@@ -17,11 +20,11 @@ int main(int argc, char* argv[])
 {
   char name[256];
   strncpy(name, argv[0], 256);
-  g_logFile.reset(new muduo::LogFile(::basename(name), 256*1024));
-  muduo::Logger::setOutput(outputFunc);
-  muduo::Logger::setFlush(flushFunc);
+  g_logFile.reset(new webServer::LogFile(::basename(name), 256*1024));
+  webServer::Logger::setOutput(outputFunc);
+  webServer::Logger::setFlush(flushFunc);
 
-  muduo::string line = "1234567890 abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  std::string line = "1234567890 abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
   for (int i = 0; i < 10000; ++i)
   {

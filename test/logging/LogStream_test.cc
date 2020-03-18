@@ -7,12 +7,12 @@
 #define BOOST_TEST_MAIN
 #include <boost/test/unit_test.hpp>
 
-using muduo::string;
+using std::string;
 
 BOOST_AUTO_TEST_CASE(testLogStreamBooleans)
 {
-  muduo::LogStream os;
-  const muduo::LogStream::Buffer& buf = os.buffer();
+  webServer::LogStream os;
+  const webServer::LogStream::Buffer& buf = os.buffer();
   BOOST_CHECK_EQUAL(buf.asString(), string(""));
   os << true;
   BOOST_CHECK_EQUAL(buf.asString(), string("1"));
@@ -24,8 +24,8 @@ BOOST_AUTO_TEST_CASE(testLogStreamBooleans)
 
 BOOST_AUTO_TEST_CASE(testLogStreamIntegers)
 {
-  muduo::LogStream os;
-  const muduo::LogStream::Buffer& buf = os.buffer();
+  webServer::LogStream os;
+  const webServer::LogStream::Buffer& buf = os.buffer();
   BOOST_CHECK_EQUAL(buf.asString(), string(""));
   os << 1;
   BOOST_CHECK_EQUAL(buf.asString(), string("1"));
@@ -41,8 +41,8 @@ BOOST_AUTO_TEST_CASE(testLogStreamIntegers)
 
 BOOST_AUTO_TEST_CASE(testLogStreamIntegerLimits)
 {
-  muduo::LogStream os;
-  const muduo::LogStream::Buffer& buf = os.buffer();
+  webServer::LogStream os;
+  const webServer::LogStream::Buffer& buf = os.buffer();
   os << -2147483647;
   BOOST_CHECK_EQUAL(buf.asString(), string("-2147483647"));
   os << (int)-2147483648;
@@ -111,8 +111,8 @@ BOOST_AUTO_TEST_CASE(testLogStreamIntegerLimits)
 
 BOOST_AUTO_TEST_CASE(testLogStreamFloats)
 {
-  muduo::LogStream os;
-  const muduo::LogStream::Buffer& buf = os.buffer();
+  webServer::LogStream os;
+  const webServer::LogStream::Buffer& buf = os.buffer();
 
   os << 0.0;
   BOOST_CHECK_EQUAL(buf.asString(), string("0"));
@@ -170,8 +170,8 @@ BOOST_AUTO_TEST_CASE(testLogStreamFloats)
 
 BOOST_AUTO_TEST_CASE(testLogStreamVoid)
 {
-  muduo::LogStream os;
-  const muduo::LogStream::Buffer& buf = os.buffer();
+  webServer::LogStream os;
+  const webServer::LogStream::Buffer& buf = os.buffer();
 
   os << static_cast<void*>(0);
   BOOST_CHECK_EQUAL(buf.asString(), string("0x0"));
@@ -184,8 +184,8 @@ BOOST_AUTO_TEST_CASE(testLogStreamVoid)
 
 BOOST_AUTO_TEST_CASE(testLogStreamStrings)
 {
-  muduo::LogStream os;
-  const muduo::LogStream::Buffer& buf = os.buffer();
+  webServer::LogStream os;
+  const webServer::LogStream::Buffer& buf = os.buffer();
 
   os << "Hello ";
   BOOST_CHECK_EQUAL(buf.asString(), string("Hello "));
@@ -197,26 +197,26 @@ BOOST_AUTO_TEST_CASE(testLogStreamStrings)
 
 BOOST_AUTO_TEST_CASE(testLogStreamFmts)
 {
-  muduo::LogStream os;
-  const muduo::LogStream::Buffer& buf = os.buffer();
+  webServer::LogStream os;
+  const webServer::LogStream::Buffer& buf = os.buffer();
 
-  os << muduo::Fmt("%4d", 1);
+  os << webServer::Fmt("%4d", 1);
   BOOST_CHECK_EQUAL(buf.asString(), string("   1"));
   os.resetBuffer();
 
-  os << muduo::Fmt("%4.2f", 1.2);
+  os << webServer::Fmt("%4.2f", 1.2);
   BOOST_CHECK_EQUAL(buf.asString(), string("1.20"));
   os.resetBuffer();
 
-  os << muduo::Fmt("%4.2f", 1.2) << muduo::Fmt("%4d", 43);
+  os << webServer::Fmt("%4.2f", 1.2) << webServer::Fmt("%4d", 43);
   BOOST_CHECK_EQUAL(buf.asString(), string("1.20  43"));
   os.resetBuffer();
 }
 
 BOOST_AUTO_TEST_CASE(testLogStreamLong)
 {
-  muduo::LogStream os;
-  const muduo::LogStream::Buffer& buf = os.buffer();
+  webServer::LogStream os;
+  const webServer::LogStream::Buffer& buf = os.buffer();
   for (int i = 0; i < 399; ++i)
   {
     os << "123456789 ";
