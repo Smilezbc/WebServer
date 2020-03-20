@@ -1,6 +1,7 @@
 #include "HttpServer.h"
 #include "HttpRequest.h"
 #include "HttpResponse.h"
+#include "HttpContext.h"
 #include "logging/Logger.h"
 
 #include<functional>
@@ -34,11 +35,11 @@ void HttpServer::onConnection(TcpConnectionPtr& conn)
 {
     if(conn->connected())
     {
-        conn.setContext(new HttpContext());
+        conn->setContext(new HttpContext());
     }
 }
 
-void HttpServer::onMessage(const TcpConnectionPtr& conn,Buffer* buffer,Timestamp receiveTime)
+void HttpServer::onMessage(TcpConnectionPtr& conn,Buffer* buffer,Timestamp receiveTime)
 {
     HttpContext* httpContext=boost::any_cast<HttpContext>(conn->getMutableContext());
     if(!httpContext->parseRequest(buffer,receiveTime))
@@ -52,7 +53,7 @@ void HttpServer::onMessage(const TcpConnectionPtr& conn,Buffer* buffer,Timestamp
     }
 }
 
-void HttpServer::onRequest(TcpConnectionPtr& conn,HttpRequest& request)
+void HttpServer::onRequest(TcpConnectionPtr& conn,const HttpRequest& request)
 {
     const std::string& connection=request.getHead("Connection");
     bool close = (connection == "Close" || (request.version() == HttpRequest::kHttp10 && connection!="Keep-Alive"));

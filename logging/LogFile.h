@@ -3,19 +3,19 @@
 
 #include<string>
 #include<boost/noncopyable.hpp>
-#include<boost/scoped_ptr.hpp>
+#include<memory>
 
 namespace webServer
 {
 
 class MutexLock;
 
-class LogFile
+class LogFile:boost::noncopyable
 {
 public:
     LogFile(const std::string& baseName,
-            size_t rollSize,
-            int flushInterval=3,
+            const size_t rollSize,
+            const int flushInterval=3,
             bool threadSafe=false);
     ~LogFile();
 
@@ -26,7 +26,7 @@ private:
     
     void append_unlocked(const char* logline,int len);
     
-    static std::string getLogFileName(const std::string& baseName,time_t* now);
+    std::string getLogFileName(const std::string& baseName,time_t* now);
     void rollFile();
 
     
@@ -41,11 +41,11 @@ private:
     time_t lastRoll_;
     time_t lastFlush_;
     
-    boost::scoped_ptr<MutexLock> mutex_;
-    boost::scoped_ptr<File> file_;
+    std::unique_ptr<MutexLock> mutex_;
+    std::unique_ptr<File> file_;
 
-    const static int kCheckTimeRoll_=1024; //
-    const static int kRollPerSeconds_ = 60*60*24;//seconds
+    static const int kCheckTimeRoll_=1024; //
+    static const int kRollPerSeconds_ = 60*60*24;//seconds
 };
 }
 #endif
