@@ -19,7 +19,7 @@ public:
     
     struct sockaddr_in getAddress();
     void setAddress(const struct sockaddr_in&);
-    std::string InetAddress::toHostAndPost();
+    std::string toHostAndPost()const;
     
 private:
     struct sockaddr_in addr_;

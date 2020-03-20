@@ -133,6 +133,58 @@ struct sockaddr_in getLocalAddr(int sockfd)
     return addr;
 }
 
+int sockets::getSocketError(int sockfd)
+{
+  int optval;
+  socklen_t optlen = static_cast<socklen_t>(sizeof optval);
+
+  if (::getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0)
+  {
+    return errno;
+  }
+  else
+  {
+    return optval;
+  }
+}
+
+void sockets::toHostPort(char* buf, size_t size,
+                         const struct sockaddr_in& addr)
+{
+  char host[INET_ADDRSTRLEN] = "INVALID";
+  ::inet_ntop(AF_INET, &addr.sin_addr, host, sizeof host);
+  uint16_t port = sockets::networkToHost16(addr.sin_port);
+  snprintf(buf, size, "%s:%u", host, port);
+}
+inline uint64_t hostToNetwork64(uint64_t host64)
+{
+  return htobe64(host64);
+}
+
+inline uint32_t hostToNetwork32(uint32_t host32)
+{
+  return htonl(host32);
+}
+
+inline uint16_t hostToNetwork16(uint16_t host16)
+{
+  return htons(host16);
+}
+
+inline uint64_t networkToHost64(uint64_t net64)
+{
+  return be64toh(net64);
+}
+
+inline uint32_t networkToHost32(uint32_t net32)
+{
+  return ntohl(net32);
+}
+
+inline uint16_t networkToHost16(uint16_t net16)
+{
+  return ntohs(net16);
+}
 }
 }
 #endif

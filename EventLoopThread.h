@@ -1,5 +1,6 @@
 #ifndef WEBSERVER_EVENTLOOPTHREAD_H
 #define WEBSERVER_EVENTLOOPTHREAD_H
+
 #include "thread/Condition.h"
 #include "thread/Mutex.h"
 #include "thread/Thread.h"
@@ -22,7 +23,7 @@ private:
     void threadFunc();
     
     bool exiting_;
-    MutexLock mutex;
+    MutexLock mutex_;
     Condition cond_;
     EventLoop* loop_;
     Thread thread_;

@@ -1,9 +1,9 @@
 #include "Timer.h"
-#include "TimeStamp.h"
+#include "Timestamp.h"
 using namespace webServer;
 
 
-Timer::Timer(TimerCallback cb,TimeStamp expiration,double interval)
+Timer::Timer(TimerCallback cb,Timestamp expiration,double interval)
   :cb_(cb),
   expiration_(expiration),
   interval_(interval),
@@ -11,11 +11,12 @@ Timer::Timer(TimerCallback cb,TimeStamp expiration,double interval)
   sequence_(s_numCreated_.incrementAndGet())
 {
 }
+
 Timer::~Timer()
 {
     
 }
-void Timer::restart(TimeStamp expiration)
+void Timer::restart(Timestamp expiration)
 {
     if(repeat_)
     {
@@ -23,7 +24,7 @@ void Timer::restart(TimeStamp expiration)
     }
     else
     {
-        expiration_=TimeStamp::invalid();
+        expiration_=Timestamp::invalid();
     }
 }
 void Timer::run()

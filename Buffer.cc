@@ -1,7 +1,14 @@
 #include "Buffer.h"
+#include "SocketOpts.h"
+
+#include <errno.h>
+#include <sys/uio.h>
+
 using namespace webServer;
 
-char Buffer::kCRLF[] = "\r\n";
+const int Buffer::kCheapPrepend=8;
+const int Buffer::kInitialSize=1024;
+const char Buffer::kCRLF[] = "\r\n";
 
 size_t Buffer::readfd(int fd,int* saveErrno)
 {
@@ -9,13 +16,13 @@ size_t Buffer::readfd(int fd,int* saveErrno)
     struct iovec ivec[2];
     const size_t writable=writableBytes();
     ivec[0].iov_base=begin()+writeableIndex_;
-    ivec[0].iv_len=writable;
+    ivec[0].iov_len=writable;
     ivec[1].iov_base=extrbuff;
-    ivec[1].iv_len=sizeof extrbuff;
+    ivec[1].iov_len=sizeof extrbuff;
     size_t n=readv(fd,ivec,2);
     if(n<0)
     {
-        *saveErrno=error;
+        *saveErrno=errno;
     }
     else if(n>writable)
     {
@@ -27,7 +34,7 @@ size_t Buffer::readfd(int fd,int* saveErrno)
     }
     return n;
 }
-const Buffer::char* findCRLF();
+const char* Buffer::findCRLF()
 {
     const char* crlf=std::search(peek(),beginWrite(),kCRLF,kCRLF+2);
     if(crlf!=beginWrite())
@@ -38,5 +45,4 @@ const Buffer::char* findCRLF();
     {
         return nullptr;
     }
-    
 }

@@ -1,15 +1,16 @@
 #include "InetAddress.h"
 
-#include "SocketsOps.h"
+#include "SocketOpts.h"
 
 #include <strings.h>  // bzero
 #include <netinet/in.h>
 
-#include <boost/static_assert.hpp>
 
 using namespace webServer;
 
-string InetAddress::toHostAndPost()
+std::string InetAddress::toHostAndPost() const
 {
-    
+    char buf[32];
+  sockets::toHostPort(buf, sizeof buf, addr_);
+  return buf;  
 }

@@ -1,6 +1,6 @@
 #include "Socket.h"
 #include "InetAddress.h"
-#include "SocketsOps.h"
+#include "SocketOpts.h"
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>

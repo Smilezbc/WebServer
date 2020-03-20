@@ -1,5 +1,4 @@
 #include "EventLoopThread.h"
-
 #include "EventLoop.h"
 
 #include <boost/bind.hpp>
@@ -17,7 +16,7 @@ EventLoopThread::EventLoopThread()
 EventLoopThread::~EventLoopThread()
 {
     exiting_=true;
-    loop_.quit();
+    loop_->quit();
     thread_.join();
 }
 void EventLoopThread::threadFunc()
@@ -25,7 +24,7 @@ void EventLoopThread::threadFunc()
     EventLoop eventloop;
 
     {
-        MutexLockGuard lock;
+        MutexLockGuard lock(mutex_);
         loop_=&eventloop;
         cond_.notify();
     }
@@ -36,11 +35,11 @@ EventLoop* EventLoopThread::startLoop()
     assert(!thread_.started());//
     thread_.start();
     {
-        MutexLockGuard lock;
+        MutexLockGuard lock(mutex_);
         while(loop_==nullptr)
         {
             cond_.wait();
         }
     }
-    reurn loop_;
+    return loop_;
 }

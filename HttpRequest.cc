@@ -50,7 +50,7 @@ void HttpRequest::addHead(const char* beg,const char* colon,const char* end)
         value.resize(value.size()-1);
     }
 }
-string HttpRequest::getHead(const string& field)
+string HttpRequest::getHead(const string& field) const
 {
     string value;
     std::map<string,string>::iterator it=heads_.find(field);

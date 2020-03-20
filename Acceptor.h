@@ -1,7 +1,7 @@
 #ifndef WEBSERVER_ACCEPTOR_H
 #define WEBSERVER_ACCEPTOR_H
 
-#include <boost/function.hpp>
+#include <functional>
 #include <boost/noncopyable.hpp>
 
 #include "Channel.h"
@@ -12,12 +12,11 @@ namespace webServer
 
 class EventLoop;
 class InetAddress;
-class Socket;
-class Channel;
+
 class Acceptor
 {
 public:
-    typedef boost::function<void (int sockfd,const InetAddress&)> NewConnectionCallback;
+    typedef std::function<void (int sockfd,const InetAddress&)> NewConnectionCallback;
     Acceptor(EventLoop* loop,InetAddress inetAddress);
 
     void setNewConnectionCallback(const NewConnectionCallback& cb)

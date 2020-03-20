@@ -1,15 +1,17 @@
 #ifndef WEBSERVER_HTTPCONTEXT_H
 #define WEBSERVER_HTTPCONTEXT_H
 
-#include "Buffer.h"
-#include "TimeStamp.h"
+#include "Timestamp.h"
 #include "HttpRequest.h"
 
 namespace webServer
 {
 
+class Buffer;
+
 class HttpContext
 {
+
 public:
     enum HttpRequestParseState
     {
@@ -20,12 +22,14 @@ public:
     };
     HttpContext();
     ~HttpContext();
-    bool parseRequest(Buffer* buffer,TimeStamp receiveTime);
+    bool parseRequest(Buffer* buffer,Timestamp receiveTime);
     bool ParseRequestLine(const char* beg,const char* end);
     bool gotAll() { return status_==kGotAll; }
+    const HttpRequest& request(){ return request_; }
+    
 private:
     HttpRequest request_;
-    HttpRequestParseState state_;
+    HttpRequestParseState status_;
 
 };
 

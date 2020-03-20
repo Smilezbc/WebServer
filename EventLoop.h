@@ -1,12 +1,14 @@
+
 #ifndef WEBSERVER_EVENTLOOP_H
 #define WEBSERVER_EVENTLOOP_H
-
 
 #include "logging/Logger.h"
 #include "thread/Mutex.h"
 #include "thread/Thread.h"
+#include "Callbacks.h"
 
 #include<vector>
+#include<memory>
 
 namespace webServer
 {
@@ -18,26 +20,24 @@ class TimeQueue;
 class EventLoop : boost::noncopyable
 {
   public:
+    typedef std::function<void()> Functor;
     EventLoop();
     ~EventLoop();
 
     void loop();
     void quit();
 
-    
-    
-
     void updateChannel(Channel*);
     void removeChannel(Channel*);
 
-    void runAt(TimerCallBack cb,TimeStamp when);
-    void runAfter(TimerCallBack cb,TimeStamp when);
-    void runEvery(TimerCallBack cb,double interval);
+    void runAt(TimerCallback cb,Timestamp when);
+    void runAfter(TimerCallback cb,Timestamp when);
+    void runEvery(TimerCallback cb,double interval);
     void cancel(TimerId timerId);//用Timer的序列号来取消某个计时器；用Timer的地址来取消timer是不可靠的
 
     void wakeup();
-    void runInLoop(Functor& functor);
-    void queueInLoop(Functor& functor);
+    void runInLoop(Functor functor);
+    void queueInLoop(Functor functor);
 
     bool isInLoopThread(){return threadId_==CurrentThread::tid();}
     void assertInLoopThread()
@@ -48,9 +48,8 @@ class EventLoop : boost::noncopyable
       }
     }
   private:
-    typedef void(*Functor)();
-    typedef vector<Channel*> ChannelList;
-    typedef vector<Functor> FunctorList;
+    typedef std::vector<Channel*> ChannelList;
+    typedef std::vector<Functor> FunctorList;
 
     void abortNotInLoopThread();
     void doPendingFunctors();
@@ -60,19 +59,19 @@ class EventLoop : boost::noncopyable
     pid_t threadId_;
     bool looping_;
     bool quit_;
-    TimeStamp pollReturnTime_;
+    Timestamp pollReturnTime_;
     bool callingPendingFunctors_;
 
-    scoped_ptr<Poller> poller_;
-    scoped_ptr<TimeQueue> timeQueue_;
+    std::unique_ptr<Poller> poller_;
+    std::unique_ptr<TimeQueue> timeQueue_;
 
-    struct eventfd wakeupFd_;
+    int wakeupFd_;
     //Channel wakeupChannel_;
-    scoped_ptr<Channel> wakeupChannel_;
+    std::unique_ptr<Channel> wakeupChannel_;
 
     ChannelList activeChannels_;
 
-    Mutex mutex_;
+    MutexLock mutex_;
     FunctorList pendingFunctors_;
 
 };

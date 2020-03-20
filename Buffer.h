@@ -1,6 +1,5 @@
 #ifndef WEBSERVER_BUFFER_H
 #define WEBSERVER_BUFFER_H
-#include "datetime/copyable.h"
 
 #include <algorithm>
 #include <string>
@@ -43,22 +42,22 @@ public:
     void retrieveUntil(char *end)
     {
         assert(peek()<=end);
-        asert(beginWrite()>=end);
+        assert(beginWrite()>=end);
         retrieve(end-peek());
     }
     void retrieveAll()
     {
-        readableIndex_=kCheapPrePend;
-        writeableIndex_=kCheapPrePend;
+        readableIndex_=kCheapPrepend;
+        writeableIndex_=kCheapPrepend;
     }
     std::string retrieveAsString()
     {
-        string res(peek(),beginWrite());
+        std::string res(peek(),beginWrite());
         retrieveAll();
     }
     void ensureWritableBytes(size_t len)
     {
-        if(writeableBytes()<len)
+        if(writableBytes()<len)
         {
             makeSpec(len);
         }
@@ -71,10 +70,10 @@ public:
     void append(const char* data,size_t len)
     {
         ensureWritableBytes(len);
-        std::copy(data,len,beginWrite());
+        std::copy(data,data+len,beginWrite());
         haveWritten(len);
     }
-    void append(void* data,size_t)
+    void append(void* data,size_t len)
     {
         char* ch=static_cast<char*>(data);
         append(ch,len);
@@ -93,21 +92,21 @@ public:
     void shrink(size_t reserve)//只保留reserve的剩余空间
     {
         int readable=readableBytes();
-        vector<char> rhs(kCheapPrePend+readableBytes()+reserve);
-        std::copy(peek(),beginWrite(),rhs.begin()+kCheapPrePend);
+        std::vector<char> rhs(kCheapPrepend+readableBytes()+reserve);
+        std::copy(peek(),beginWrite(),rhs.begin()+kCheapPrepend);
         buffer_.swap(rhs);
-        readableIndex_=kCheapPrePend;
-        writeableIndex_=kCheapPrePend+readable;
+        readableIndex_=kCheapPrepend;
+        writeableIndex_=kCheapPrepend+readable;
     }
     const char* findCRLF();
-    void readfd(int fd,int*savedErrno);
+    size_t readfd(int fd,int*savedErrno);
 
 private:
     char* begin(){return &*buffer_.begin();}
     const char* begin() const {return &*buffer_.begin();}
     void makeSpec(size_t len)
     {
-        if(prependBytes()+writableBytes()<len+kCheapPrePend)
+        if(prependBytes()+writableBytes()<len+kCheapPrepend)
         {
             buffer_.resize(writeableIndex_+len);
         }
@@ -119,11 +118,13 @@ private:
             writeableIndex_=kCheapPrepend+readable;
         }
     }
-    vector<char> buffer_;
+    std::vector<char> buffer_;
     int readableIndex_;
     int writeableIndex_;
+    static const int kCheapPrepend;
+    static const int kInitialSize;
     static const char kCRLF[];
-}
+};
 
 }
 

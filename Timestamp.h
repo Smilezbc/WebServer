@@ -17,10 +17,12 @@ public:
     {
     }
     int64_t microSecondsSinceEpoch() const { return microSecondsSinceEpoch_;}
-    static Timestamp now();
-    Timestamp invalid(){return Timestamp();}
     bool operator<(const Timestamp& time);
     bool valid() const { return microSecondsSinceEpoch_ > 0; }
+    std::string toString() const;
+    
+    static Timestamp now();
+    static Timestamp invalid(){return Timestamp();}
     
 private:
     //time_t microSecondsSinceEpoch_;

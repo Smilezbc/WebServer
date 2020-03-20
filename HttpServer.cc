@@ -1,13 +1,17 @@
 #include "HttpServer.h"
 #include "HttpRequest.h"
 #include "HttpResponse.h"
+#include "logging/Logger.h"
+
+#include<functional>
+
 using namespace webServer;
 
 HttpServer::HttpServer(EventLoop* loop,InetAddress inetAddr)
   :server_(loop,inetAddr)
 {
-    server_.setConnectionCallback(std::bind(HttpServer::onConnection,this));
-    server_.setMessageCallback(std::bind(HttpServer::onMessage,this));
+    server_.setConnectionCallback(std::bind(HttpServer::onConnection,this,_1));
+    server_.setMessageCallback(std::bind(HttpServer::onMessage,this,_1,_2,_3));
 }
 
 HttpServer::~HttpServer()
@@ -34,7 +38,7 @@ void HttpServer::onConnection(TcpConnectionPtr& conn)
     }
 }
 
-void HttpServer::onMessage(const TcpConnectionPtr& conn,Buffer* buffer,TimeStamp receiveTime)
+void HttpServer::onMessage(const TcpConnectionPtr& conn,Buffer* buffer,Timestamp receiveTime)
 {
     HttpContext* httpContext=boost::any_cast<HttpContext>(conn->getMutableContext());
     if(!httpContext->parseRequest(buffer,receiveTime))
@@ -48,10 +52,10 @@ void HttpServer::onMessage(const TcpConnectionPtr& conn,Buffer* buffer,TimeStamp
     }
 }
 
-void HttpServer::onRequest(const TcpConnectionPtr& conn,HttpRequest& request)
+void HttpServer::onRequest(TcpConnectionPtr& conn,HttpRequest& request)
 {
-    const string& connection=request.getHead("Connection");
-    bool close = (connection == "Close" || (request.getVersion() == HttpRequest::kHttp10 && connection!="Keep-Alive"))
+    const std::string& connection=request.getHead("Connection");
+    bool close = (connection == "Close" || (request.version() == HttpRequest::kHttp10 && connection!="Keep-Alive"));
     HttpResponse response(close);
     onHttpRequest(request,&response);
     Buffer buffer;
@@ -64,20 +68,20 @@ void HttpServer::onRequest(const TcpConnectionPtr& conn,HttpRequest& request)
 }
 void HttpServer::onHttpRequest(const HttpRequest& request,HttpResponse* response)
 {
-    const string& path=request.path();
+    const std::string& path=request.path();
     if(path=="/")
     {
-        response.setStatusCode(HttpResponse::k200Ok);
-        response.setStatusMessage("Ok");
-        response.setConnectionClose(true);
-        response.setContentType("text/html");
-        response.setBody("<html>good morning,my princess!</html>");
+        response->setStatusCode(HttpResponse::k200Ok);
+        response->setStatusMessage("Ok");
+        response->setCloseConnection(true);
+        response->setContentType("text/html");
+        response->setBody("<html>good morning,my princess!</html>");
     }
     else
     {
-        response.setStatusCode(HttpResponse::k404NotFound);
-        response.setStatusMessage("Sorry,Not Found");
-        response.setConnectionClose(true);
+        response->setStatusCode(HttpResponse::k404NotFound);
+        response->setStatusMessage("Sorry,Not Found");
+        response->setCloseConnection(true);
     }
     
 }

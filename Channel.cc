@@ -1,8 +1,11 @@
 #include "Channel.h"
 #include "EventLoop.h"
 #include "logging/Logger.h"
-using namespace webServer;
 
+#include <sstream>
+#include <poll.h>
+
+using namespace webServer;
 
 const int Channel::kNoneEvent = 0;
 const int Channel::kReadEvent = POLLIN | POLLPRI;
@@ -11,8 +14,8 @@ const int Channel::kWriteEvent = POLLOUT;
 Channel::Channel(EventLoop* loop,int fd)
   :loop_(loop),
   fd_(fd),
-  event_(0),
-  revent_(0),
+  events_(0),
+  revents_(0),
   index_(-1),
   eventHandling_(false)
 {
@@ -22,12 +25,12 @@ Channel::~Channel()
 }
 void Channel::update()
 {
-    loop_.updateChannel(this);
+    loop_->updateChannel(this);
 }
-void Channel::handleEvent(TimeStamp time)
+void Channel::handleEvent(Timestamp time)
 {
     eventHandling_=true;//
-    if(revents_ & POLLNOVAL)
+    if(revents_ & POLLNVAL)
     {
         LOG_WARN << "Channel::handle_event() POLLNVAL";
     }

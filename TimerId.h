@@ -9,12 +9,12 @@ class Timer;
 class TimerId
 {
   public:
-    TimerId(Timer timer,int64_t sequence)
+    TimerId(Timer* timer,int64_t sequence)
       :timer_(timer),
       sequence_(sequence)
     {
     }
-    Timer timer_;
+    Timer* timer_;
     int64_t sequence_;
 };
 }

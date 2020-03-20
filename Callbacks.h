@@ -3,22 +3,39 @@
 
 #include "Timestamp.h"
 
-#include <boost/function.hpp>
-#include <boost/shared_ptr.hpp>
+#include<memory>
+#include<functional>
 
 namespace webServer
 {
-    class Buffer;
-    class TcpConnection;
-    typedef boost::shared_ptr<TcpConnection> TcpConnectionPtr;
+    
+using std::placeholders::_1;
+using std::placeholders::_2;
+using std::placeholders::_3;
 
-    typedef boost::function<void()> TimerCallback;
-    typedef boost::function<void()> EventCallback;
-    typedef boost::function<void(Timestamp)>ReadEventCallback;
+template<typename T>
+inline T* get_pointer(const std::shared_ptr<T>& ptr)
+{
+  return ptr.get();
+}
 
-    typedef boost::function<void (TcpConnectionPtr&)> ConnectionCallback;
-    typedef boost::function<void (TcpConnectionPtr&,Buffer*,Timestamp)> MessageCallback;
-    typedef boost::function<void (TcpConnectionPtr&)> WriteCompleteCallback;
-    typedef boost::function<void (TcpConnectionPtr&)> CloseCallback;
+template<typename T>
+inline T* get_pointer(const std::unique_ptr<T>& ptr)
+{
+  return ptr.get();
+}
+
+class Buffer;
+class TcpConnection;
+typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
+typedef std::function<void()> TimerCallback;
+typedef std::function<void()> EventCallback;
+typedef std::function<void(Timestamp)>ReadEventCallback;
+
+typedef std::function<void (TcpConnectionPtr&)> ConnectionCallback;
+typedef std::function<void (TcpConnectionPtr&,Buffer*,Timestamp)> MessageCallback;
+typedef std::function<void (TcpConnectionPtr&)> WriteCompleteCallback;
+typedef std::function<void (TcpConnectionPtr&)> CloseCallback;
+
 }
 #endif

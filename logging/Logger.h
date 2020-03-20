@@ -6,6 +6,7 @@
 
 namespace webServer
 {
+
 class Logger
 {
 public:
@@ -64,6 +65,7 @@ private:
 #define LOG_SYSFATAL webServer::Logger(__FILE__,__LINE__,true).stream()
 
 const char* strerror_tl(int savedErrno);
+
 }
 
 #endif

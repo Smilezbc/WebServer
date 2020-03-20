@@ -3,9 +3,9 @@
 #include "logging/Logger.h"
 #include "EventLoop.h"
 #include "InetAddress.h"
-#include "SocketsOps.h"
+#include "SocketOpts.h"
 
-#include <boost/bind.hpp>
+#include<functional>
 
 using namespace webServer;
 
@@ -18,7 +18,7 @@ Acceptor::Acceptor(EventLoop* loop,InetAddress inetAddress)
 {
     acceptSocket_.setReuseAddr(true);
     acceptSocket_.bindAddr(inetAddress);
-    acceptChannel_.setReadCallback(boost::bind(Acceptor::handleRead,this));
+    acceptChannel_.setReadCallback(std::bind(&Acceptor::handleRead,this));
 }
 Acceptor::~Acceptor()
 {

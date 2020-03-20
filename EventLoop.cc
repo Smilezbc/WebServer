@@ -3,10 +3,18 @@
 #include "Poller.h"
 #include "Timer.h"
 #include "TimeQueue.h"
+#include "TimerId.h"
+#include <algorithm>
+#include <signal.h>
+#include <sys/eventfd.h>
+#include <unistd.h>
+#include<assert.h>
 
-namespace webServer
+namespace 
 {
+    
     __thread EventLoop* t_loopInThisThread=nullptr;
+    const int kPollWaitTimeMs = 10000;
 
     int CreateEventfd()
     {
@@ -17,6 +25,17 @@ namespace webServer
         }
         return fd_;
     }
+
+class IgnoreSigPipe
+{
+ public:
+  IgnoreSigPipe()
+  {
+    ::signal(SIGPIPE, SIG_IGN);
+  }
+};
+IgnoreSigPipe initObj;
+
 }
 
 
@@ -30,7 +49,7 @@ EventLoop::EventLoop()
   poller_(new Poller(this)),
   timeQueue_(new TimeQueue(this)),
   wakeupFd_(CreateEventfd()),
-  wakeupChannel_(new Channel(this,wakeupfd_))
+  wakeupChannel_(new Channel(this,wakeupFd_))
 {
     LOG_TRACE << "EventLoop created " << this << " in thread " << threadId_; 
     if(t_loopInThisThread)
@@ -41,7 +60,7 @@ EventLoop::EventLoop()
     {
         t_loopInThisThread=this;
     }
-    wakeupChannel_->setReadCallback(boost::bind(EventLoop::handRead,this));
+    wakeupChannel_->setReadCallback(std::bind(EventLoop::handRead,this));
     wakeupChannel_->enableRead();
 }
 EventLoop::~EventLoop()
@@ -53,7 +72,7 @@ EventLoop::~EventLoop()
 
 void EventLoop::loop()
 {
-    assert(!loop_);//
+    assert(!looping_);//
     assertInLoopThread();
     looping_=true;
     quit_=false;
@@ -87,7 +106,7 @@ void EventLoop::quit()
 void EventLoop::wakeup()
 {
     uint64_t one;
-    ssize_t n=::write(wakeupFd_,one,sizeof one);
+    ssize_t n=::write(wakeupFd_,&one,sizeof one);
     if(n<sizeof one)
     {
         LOG_ERROR << "EventLoop::wakeup() write "<<n<<" bytes instead of 8";
@@ -95,7 +114,7 @@ void EventLoop::wakeup()
 }
 void EventLoop::handRead()
 {
-    uint6_t one; //int64_t one;
+    uint64_t one; //int64_t one;
     ssize_t n=::read(wakeupFd_,&one,sizeof one);//int n=::read(wakeupFd_,&one,sizeof one);
     if(n != sizeof one)
     {
@@ -103,7 +122,7 @@ void EventLoop::handRead()
     }
     //quit_=true;
 }
-void EventLoop::runInLoop(Functor& functor)
+void EventLoop::runInLoop(Functor functor)
 {
     if(isInLoopThread())
     {
@@ -114,10 +133,10 @@ void EventLoop::runInLoop(Functor& functor)
         queueInLoop(functor);
     }
 }
-void EventLoop::queueInLoop(Functor& functor)
+void EventLoop::queueInLoop(Functor functor)
 {
     {
-        MutexLockGuard lock;
+        MutexLockGuard lock(mutex_);
         pendingFunctors_.push_back(functor);
     }
     if(!isInLoopThread() || callingPendingFunctors_)
@@ -131,7 +150,7 @@ void EventLoop::doPendingFunctors()
     callingPendingFunctors_=true;
     FunctorList pendingFunctors;
     {
-        MutexLockGuard lock_;
+        MutexLockGuard lock(mutex_);
         pendingFunctors.swap(pendingFunctors_);
     }
     for(FunctorList::iterator it=pendingFunctors.begin();it!=pendingFunctors.end();++it)
@@ -157,18 +176,18 @@ void EventLoop::removeChannel(Channel* channel)
 
 //*****************************************关于定时器的部分**************************
 
-void EventLoop::runAt(TimerCallback cb,TimeStamp when)
+void EventLoop::runAt(TimerCallback cb,Timestamp when)
 {
     timeQueue_->addTimer(cb,when,0.0);//必须保证在loop线程中添加
 }
-void EventLoop::runAfter(TimerCallback cb,int delay)
+void EventLoop::runAfter(TimerCallback cb,double delay)
 {
-    TimeStamp when = addTime(TimeStamp::now(),delay);
+    Timestamp when = addTime(Timestamp::now(),delay);
     runAt(cb,when);
 }
 void EventLoop::runEvery(TimerCallback cb,double interval) //interval是秒数
 {
-    TimeStamp when = addTime(TimeStamp::now(),interval);
+    Timestamp when = addTime(Timestamp::now(),interval);
     timeQueue_->addTimer(cb,when,interval);
 }
 //Timer的地址是不能用来区分不同的Timer的

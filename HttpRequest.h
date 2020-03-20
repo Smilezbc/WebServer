@@ -1,7 +1,10 @@
 #ifndef WEBSERVER_HTTPREQUEST_H
 #define WEBSERVER_HTTPREQUEST_H
 
+#include "Timestamp.h"
+
 #include<string>
+#include<map>
 
 namespace webServer
 {
@@ -13,9 +16,9 @@ public:
     enum Version{ kHttp10, kHttp11, kUnknown};
     HttpRequest(/* args */);
     ~HttpRequest();
-    string getHead(const string& field);
-    const Version version();
-    const string& path();
+    std::string getHead(const std::string& field) const;
+    const Version version() const ;
+    const std::string& path() const;
     bool setMothed(const char* beg,const char* end);
     void setPath(const char* beg,const char* end){ path_ = std::string(beg,end); }
     void setQuery(const char* beg,const char* end){ query_ = std::string(beg,end); }
@@ -27,8 +30,8 @@ private:
     std::string path_;
     std::string query_;
     Version version_;
-    TimeStamp receiveTime_;
-    std::map<string,string> heads_;
+    Timestamp receiveTime_;
+    std::map<std::string,std::string> heads_;
 };
 
     

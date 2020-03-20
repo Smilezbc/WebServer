@@ -1,32 +1,45 @@
 #ifndef WEBSERVER_TIMEQUEUE_H
 #define WEBSERVER_TIMEQUEUE_H
 
-#include<boost/noncopyable.hpp>
 #include "Callbacks.h"
+#include "Channel.h"
+
+#include<boost/noncopyable.hpp>
+#include<set>
+#include<vector>
+
 namespace webServer
 {
+
 class TimerId;
-class TimeStamp;
-clss Timer;
+class Timestamp;
+class Timer;
+class EventLoop;
 
 class TimeQueue : boost::noncopyable
 {
   public:
-    typedef pair<TimeStamp,Timer*> Entry;
-    typedef set<Entry> TimerSet;
-    typedef pair<Timer*,int64_t> ActiveTimer;
-    typedef set<ActiveTimer> ActiveTimerSet;
+    typedef std::pair<Timestamp,Timer*> Entry;
+    typedef std::set<Entry> TimerSet;
+    typedef std::pair<Timer*,int64_t> ActiveTimer;
+    typedef std::set<ActiveTimer> ActiveTimerSet;
+
     TimeQueue(EventLoop* loop);
     ~TimeQueue();
 
-    void addTimer(TimerCallback& cb,TimeStamp when,double interval);
+    void addTimer(TimerCallback& cb,Timestamp when,double interval);
     void cancel(TimerId timerId);
   private:
-    void handRead();
+    void handleRead();
     bool insert(Timer* timer);
+    std::vector<Entry> getExpired(Timestamp now);
+    void reset(std::vector<Entry>& expired,Timestamp now);
+    void addTimerInLoop(Timer* timer);
+    void cancelInLoop(TimerId timerId);
+
     EventLoop* loop_;
 
-    timerfd timefd_;
+    int timerfd_;
     Channel timerfdChannel_;
 
     TimerSet timers_;

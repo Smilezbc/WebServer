@@ -1,5 +1,8 @@
 #include "Timestamp.h"
+
 #include <sys/time.h>
+#include<string>
+#include <inttypes.h>
 
 using namespace webServer;
 Timestamp::Timestamp()
@@ -20,4 +23,13 @@ Timestamp Timestamp::now()
 bool Timestamp::operator<(const Timestamp& time)
 {
     return microSecondsSinceEpoch_<time.microSecondsSinceEpoch_;
+}
+
+std::string Timestamp::toString() const
+{
+  char buf[32] = {0};
+  int64_t seconds = microSecondsSinceEpoch_ / kMicroSecondsPerSecond;
+  int64_t microseconds = microSecondsSinceEpoch_ % kMicroSecondsPerSecond;
+  snprintf(buf, sizeof(buf)-1, "%" PRId64 ".%06" PRId64 "", seconds, microseconds);
+  return buf;
 }

@@ -14,32 +14,32 @@ EventLoopThreadPool::EventLoopThreadPool(EventLoop* baseLoop)
   started_(false)
 {
 }
-~EventLoopThreadPool::EventLoopThreadPool()
-{
 
+EventLoopThreadPool::~EventLoopThreadPool()
+{
 }
 
 void EventLoopThreadPool::start()
 {
     assert(!started_);
-    baseLoop_->assertInLoopThred();
+    baseLoop_->assertInLoopThread();
     started_=true;
-    for(int i=0;i<numThreads;++i)
+    for(int i=0;i<numThreads_;++i)
     {
         EventLoopThread* thread=new EventLoopThread();
-        threads.push_back(thread);
-        loops.push_back(thread->startLoop());
+        threads_.push_back(thread);
+        loops_.push_back(thread->startLoop());
     }
 }
-EventLoop* getNextLoop()
+EventLoop* EventLoopThreadPool::getNextLoop()
 {
-    baseLoop_.assertInLoopThread();
+    baseLoop_->assertInLoopThread();
     EventLoop* loop=baseLoop_;
     if(!loops_.empty())
     {
-        loop=loops[nextLoop_];
+        loop=loops_[nextLoop_];
         ++nextLoop_;
-        if(static_cast<int>(nextLoop_)>=loops.size())
+        if(static_cast<int>(nextLoop_)>=loops_.size())
         {
             nextLoop_=0;
         }

@@ -1,17 +1,16 @@
 #include "TcpConnection.h"
 
-#include "logging/Logging.h"
+#include "logging/Logger.h"
 #include "Channel.h"
 #include "EventLoop.h"
 #include "Socket.h"
-#include "SocketsOps.h"
+#include "SocketOpts.h"
 
-#include <boost/bind.hpp>
-
+#include<memory>
 #include <errno.h>
-#include <stdio.h>
 
 using namespace webServer;
+using namespace std;
 
 TcpConnection::TcpConnection(EventLoop* loop,const string& name,int sockfd,InetAddress& localAddress,InetAddress& peerAddress)
   :loop_(loop),
@@ -22,12 +21,11 @@ TcpConnection::TcpConnection(EventLoop* loop,const string& name,int sockfd,InetA
   localAddress_(localAddress),
   peerAddress_(peerAddress)
 {
-    LOG_DEBUG << "TcpConnection::ctor[" <<  name_ << "] at " << this
-            << " fd=" << sockfd;
-    channel_->setReadCallback(boost::bind(TcpConnection::handleRead,this,_1));
-    channel_->setWriteCallback(boost::bind(TcpConnection::handleWrite,this));
-    channel_->setCloseCallback(boost::bind(TcpConnection::handleClose,this));
-    channel_->setErrorCallback(boost::bind(TcpConnection::handleError,this));
+    LOG_DEBUG << "TcpConnection::ctor[" <<  name_ << "] at " << this<< " fd=" << sockfd;
+    channel_->setReadCallback( bind(&TcpConnection::handleRead,this,_1) );
+    channel_->setWriteCallback( bind(&TcpConnection::handleWrite,this) );
+    channel_->setCloseCallback( bind(&TcpConnection::handleClose,this) );
+    channel_->setErrorCallback( bind(&TcpConnection::handleError,this) );
 }
 
 TcpConnection::~TcpConnection()
@@ -50,14 +48,14 @@ void TcpConnection::connectDestroyed()
     loop_->assertInLoopThread();
     assert(state_==kConnected || state_==kDisconnecting);
     state_=kDisconnected;
-    channel_.disableAll();
+    channel_->disableAll();
     connectionCallback_(shared_from_this());
 
     loop_->removeChannel(get_pointer(channel_));
 }
 
 
-void TcpConnection::setNoDelay(bool on)
+void TcpConnection::setTcpNoDelay(bool on)
 {
     socket_->setNoDelay(on);
 }
@@ -73,7 +71,7 @@ void TcpConnection::shutdown()
         }
         else
         {
-            loop_->queueInLoop(boost::bind(TcpConnection::shutdownInLoop,this));
+            loop_->queueInLoop(bind(TcpConnection::shutdownInLoop,this));
         }
     }
 }
@@ -97,7 +95,7 @@ void TcpConnection::send(const std::string& message)
         }
         else
         {
-            loop->queueInLoop(boost::bind(TcpConnection::sendInLoop,this,message));
+            loop_->queueInLoop(bind(TcpConnection::sendInLoop,this,message));
         }
     }
 }
@@ -106,7 +104,7 @@ void TcpConnection::sendInLoop(const std::string& message)
 {
     loop_->assertInLoopThread();
     ssize_t nwrote=0;
-    if(!channel->isWriting() && outputBuffer_.readableBytes()==0)
+    if(!channel_->isWriting() && outputBuffer_.readableBytes()==0)
     {
         nwrote=::write(channel_->fd(),message.data(),message.size());
         if(nwrote>=0)
@@ -115,15 +113,15 @@ void TcpConnection::sendInLoop(const std::string& message)
             {
                 LOG_TRACE << "I am going to write more data";
             }
-            else if(writeCompleteCallback)
+            else if(writeCompleteCallback_)
             {
-                loop_->queueInLoop(boost::bind(writeCompleteCallback,shared_from_this()));
+                loop_->queueInLoop(bind(writeCompleteCallback_,shared_from_this()));
             }
         }
         else
         {
             nwrote=0;
-            if(erron!=EWOULDBLOCK)//EWOULDBLOCK的原因：socket的发送缓冲区的低水位线没有达到
+            if(errno!=EWOULDBLOCK)//EWOULDBLOCK的原因：socket的发送缓冲区的低水位线没有达到
             {
                 LOG_SYSERR << "TcpConnection::sendInLoop";
             }
@@ -135,16 +133,16 @@ void TcpConnection::sendInLoop(const std::string& message)
         outputBuffer_.append(message.data()+nwrote, message.size()-nwrote);
         if (!channel_->isWriting()) 
         {
-            channel_->enableWriting();
+            channel_->enableWrite();
         }
     }
 }
 
-void TcpConnection::handleRead(TimeStamp recieveTime)
+void TcpConnection::handleRead(Timestamp recieveTime)
 {
     loop_->assertInLoopThread();
     int savedErrno;
-    size_t n=inputBuffer_.readfd(socket_.fd(),&savedErrno);
+    size_t n=inputBuffer_.readfd(socket_->fd(),&savedErrno);
     if(n>0)
     {
         messageCallback_(shared_from_this(),&inputBuffer_,recieveTime);
@@ -155,7 +153,7 @@ void TcpConnection::handleRead(TimeStamp recieveTime)
     }
     else
     {
-        error=savedErrno;
+        errno=savedErrno;
         LOG_SYSERR << "TcpConnection::handleRead";//
         handleError();
     }
@@ -173,10 +171,10 @@ void TcpConnection::handleWrite()
             if(outputBuffer_.readableBytes()==0)
             {
                 channel_->disableWrite();
-                if(writeCompeleCallback)
+                if(writeCompleteCallback_)
                 {
                     //writeCompeleCallback();
-                    loop_->queueInLoop(boost::bind(writeCompleteCallback_, shared_from_this()));
+                    loop_->queueInLoop(bind(writeCompleteCallback_, shared_from_this()));
                 }
                 if(state_==kDisconnecting)
                 {
@@ -202,7 +200,7 @@ void TcpConnection::handleWrite()
 void TcpConnection::handleClose()
 {
     loop_->assertInLoopThread();
-    assert(state_==kConnected || state_==kDisconnecting)
+    assert(state_==kConnected || state_==kDisconnecting);
     channel_->disableAll();
     closeCallback(shared_from_this());
 }
@@ -210,7 +208,7 @@ void TcpConnection::handleClose()
 void TcpConnection::handleError()
 {
     loop_->assertInLoopThread();
-    int err=sockets::getSockError(socket_->fd());
+    int err=sockets::getSocketError(socket_->fd());
     LOG_ERROR << "TcpConnection::handleError [" << name_
             << "] - SO_ERROR = " << err << " " << strerror_tl(err);
 }
