@@ -12,6 +12,7 @@ namespace detail
 const char digits[]="9876543210123456789";
 const char* zero=digits+9;
 const char digitsHex[]="0123456789abcdef";
+
 template<typename T>
 int convert(char *buf,T val)
 {
@@ -23,6 +24,7 @@ int convert(char *buf,T val)
         i/=10;
         *p++=zero[slab];
     } while (i!=0);
+
     if(val<0)
     {
         *p++='-';
@@ -31,6 +33,7 @@ int convert(char *buf,T val)
     std::reverse(buf,p);
     return p-buf;
 }
+
 int convertHex(char *buf,uintptr_t val)
 {
     uintptr_t i=val;
@@ -39,22 +42,24 @@ int convertHex(char *buf,uintptr_t val)
     char *p=buf+2;
     do
     {
-        /* code */
         int slab=i%16;
         i/=16;
         *p++=buf[slab];
     } while (i!=0);
+
     *p='\0';
     std::reverse(buf,p);
     return p-buf;
 }
 
 }
+
 }
 
 //限制 模板类FixBuffer只能实例化成下面两种尺寸
 template class FixedBuffer<detail::kSmallBufferSize>;
 template class FixedBuffer<detail::kLargeBufferSize>;
+
 template<int Size>
 void FixedBuffer<Size>::cookieBegin()
 {
@@ -67,12 +72,14 @@ void FixedBuffer<Size>::cookieEnd()
 
 }
 template<int Size>
-void FixedBuffer<Size>::debugString()
+const char* FixedBuffer<Size>::debugString()
 {
     *cur_='\0';
+    return data_;
 }
 
-static const int LogStream::kMaxNumericSize=32;
+const int LogStream::kMaxNumericSize=32;
+
 void LogStream::staticCheck()
 {
     static_assert(kMaxNumericSize-10 > std::numeric_limits<double>::digits10);
@@ -137,7 +144,6 @@ LogStream::self& LogStream::operator<<(float val)
 }
 LogStream::self& LogStream::operator<<(double val)
 {
-    
     if(buffer_.avail()>=kMaxNumericSize)
     {
         int len=snprintf(buffer_.current(),kMaxNumericSize,"%.12g",val);
@@ -145,6 +151,7 @@ LogStream::self& LogStream::operator<<(double val)
     }
     return *this;
 }
+
 LogStream::self& LogStream::operator<<(long double val)
 {
     
@@ -163,15 +170,16 @@ LogStream::self& LogStream::operator<<(void* p)
     buf[1]='x';
     int len=convertHex(buf+2,val);
     buffer_.add(len+2);
+    return *this;
 }
 
 template<typename T>
 Fmt::Fmt(const char* fmt,T val)
 {
     static_assert(boost::is_arithmetic<T>::value == true);
-    //static_assert(boost::is_arithmetic<T>::value == true);
+    
     len_ = snprintf(data_,sizeof data_,fmt,val);
-    assert(static_cast<size_t>(len_)<sizeof data);
+    assert(static_cast<size_t>(len_) < sizeof data_);
 }
 
 //限制Fmt的模板构造函数只能实例化成以下几种类型

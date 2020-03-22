@@ -37,19 +37,18 @@ private:
     class Impl
     {
     public:
-        Impl(LogLevel level,int savedError,const char* file,int line);
+        Impl(LogLevel level,int savedErrno,const char* file,int line);
         void formatTime();
         void finish();
 
-        LogStream stream_;
         Timestamp time_;
+        LogStream stream_;
         LogLevel level_;
+        int line_;
         const char* fullName_;
         const char* baseName_;
-        int line_;
     };
     Impl impl_;
-    static const int kMicroSecondsPerSecond=1000*1000;
 };
 
 #define LOG_TRACE webServer::Logger(__FILE__,__LINE__,webServer::Logger::TRACE,__func__).stream()

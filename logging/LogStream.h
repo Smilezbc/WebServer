@@ -43,31 +43,33 @@ class FixedBuffer
     int avail() const { return end()-cur_; }
     void setCookie(void (*cookie)()){ cookie_=cookie; }
 
-    void debugString();//这个的作用是什么
+    const char* debugString();
     std::string asString() const { return std::string(data_,length()); }
 
   private:
+    static void cookieBegin();
+    static void cookieEnd();
+
     const char* end() const {return data_+Size;}
     char data_[Size];
     char* cur_;
     void (*cookie_)();
-    static void cookieBegin();
-    static void cookieEnd();
+    
 };
 
 }
 
 struct T 
 {
-    T(char* str,int len):str_(str),len_(len)
+    T(const char* str,int len):str_(str),len_(len)
     {
         assert(len==strlen(str));
     }
-    char* str_;
-    size_t len_;
+    const char* str_;
+    const size_t len_;
 };
 
-class LogStream
+class LogStream : boost::noncopyable
 {
 public:
     typedef detail::FixedBuffer<detail::kSmallBufferSize> Buffer;
@@ -132,9 +134,10 @@ class Fmt //这个类的作用:将数值类型变量按用户自定义的方法�
     const char* data() const { return data_;}
     size_t length() const { return len_;}
   private:
-    char* data_;
+    char data_[32];
     int len_;
 };
+
 inline LogStream& operator<<(LogStream& s,const Fmt& fmt)
 {
     s.append(fmt.data(),fmt.length());

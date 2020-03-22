@@ -1,5 +1,5 @@
 #include "Logger.h"
-#include "thread/Thread.h"
+#include "../thread/Thread.h"
 
 #include<cstring>
 
@@ -13,24 +13,24 @@ const char* logLevelName[]=
 {
     "TRACE ",
     "DEBUG ",
-    "INFO ",
-    "WARN ",
+    "INFO  ",
+    "WARN  ",
     "ERROR ",
     "FATAL "
 };
 const char* strerror_tl(int savedError)
 {
-    return strerror_r(savedError,t_errnobuf,sizeof t_errnobuf);
+    return ::strerror_r(savedError,t_errnobuf,sizeof t_errnobuf);
 }
 
 void defaultOutput(const char* buf,int len)
 {
-    fwrite(buf,1,len,stdout);
+    ::fwrite(buf,1,len,stdout);
 }
 
 void defaultFlush()
 {
-    fflush(stdout);
+    ::fflush(stdout);
 }
 
 Logger::LogLevel initLogLevel()
@@ -56,8 +56,8 @@ using namespace webServer;
 void Logger::Impl::formatTime()
 {
     int64_t mircoSecondsSinceEpoch=time_.microSecondsSinceEpoch();
-    time_t seconds=static_cast<time_t>(mircoSecondsSinceEpoch/kMicroSecondsPerSecond);
-    int64_t microSeconds=mircoSecondsSinceEpoch%kMicroSecondsPerSecond;
+    time_t seconds=static_cast<time_t>(mircoSecondsSinceEpoch/1000000);
+    int64_t microSeconds=mircoSecondsSinceEpoch%1000000;
     if(seconds!=t_lastSecond)
     {
         t_lastSecond=seconds;
@@ -73,19 +73,17 @@ void Logger::Impl::formatTime()
 }
 
 Logger::Impl::Impl(LogLevel level,int savedErrno,const char* file,int line)
-   :stream_(),
-   time_(Timestamp::now()),
+   :time_(Timestamp::now()),
+   stream_(),
    level_(level),
+   line_(line),
    fullName_(file),
-   baseName_(nullptr),
-   line_(line)
+   baseName_(nullptr)
 {
     const char* pos_seq=strrchr(fullName_,'/');
     baseName_= (pos_seq != nullptr ? pos_seq+1 : fullName_) ;
 
     formatTime();
-    // int tid=gettid();
-    // stream_<<tid;
     Fmt tid("%5d ",CurrentThread::tid());
     stream_<<tid<<logLevelName[level_];
     if(savedErrno!=0)
@@ -133,11 +131,11 @@ void Logger::setLogLevel(LogLevel level)
 {
     g_logLevel=level;
 }
-void Logger::setOutput(outPutFunc func)
+void Logger::setOutput(outPutFunc output)
 {
-    g_output=func;
+    g_output=output;
 }
-void Logger::setFlush(flushFunc func)
+void Logger::setFlush(flushFunc flush)
 {
-    g_flush=func;
+    g_flush=flush;
 }
