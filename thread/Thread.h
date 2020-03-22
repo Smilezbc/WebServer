@@ -1,7 +1,7 @@
 #ifndef WEBSERVER_THREAD_H
 #define WEBSERVER_THREAD_H
 
-#include "Atomic.h"
+#include "../Atomic.h"
 
 #include <boost/noncopyable.hpp>
 #include <pthread.h>

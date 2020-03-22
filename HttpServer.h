@@ -5,6 +5,7 @@
 #include "TcpConnection.h"
 #include "Timestamp.h"
 #include "Buffer.h"
+#include "Atomic.h"
 
 
 namespace webServer
@@ -17,7 +18,9 @@ class HttpResponse;
 class HttpServer
 {
 public:
-    HttpServer(EventLoop* loop,InetAddress inetAddr);
+    HttpServer(EventLoop* loop,
+               InetAddress inetAddr，
+               int maxConnections);
     ~HttpServer();
     void start();
     void setNumThread(int numThread);
@@ -29,6 +32,8 @@ private:
     void onHttpRequest(const HttpRequest&,HttpResponse*);
 
     TcpServer server_;
+    AtomicInt32 numConnected_;
+    const int kMaxConnections_;
 };
 
 }

@@ -8,8 +8,12 @@
 
 using namespace webServer;
 
-HttpServer::HttpServer(EventLoop* loop,InetAddress inetAddr)
-  :server_(loop,inetAddr)
+HttpServer::HttpServer(EventLoop* loop,
+                       InetAddress inetAddr,
+                       int maxConnection)
+  :server_(loop,inetAddr),
+  numConnected_(0),
+  kMaxConnections_(maxConnection)
 {
     server_.setConnectionCallback(std::bind(HttpServer::onConnection,this,_1));
     server_.setMessageCallback(std::bind(HttpServer::onMessage,this,_1,_2,_3));
@@ -35,7 +39,18 @@ void HttpServer::onConnection(TcpConnectionPtr& conn)
 {
     if(conn->connected())
     {
-        conn->setContext(new HttpContext());
+        if(numConnected_.incrementAndGet()>kMaxConnections_)
+        {
+            conn->shutdown();
+        }
+        else
+        {
+            conn->setContext(new HttpContext());
+        }
+    }
+    else
+    {
+        numConnected_.decrement();
     }
 }
 
