@@ -3,6 +3,7 @@
 #include "HttpResponse.h"
 #include "HttpContext.h"
 #include "logging/Logger.h"
+#include "EventLoop.h"
 
 #include<functional>
 
@@ -10,18 +11,26 @@ using namespace webServer;
 
 HttpServer::HttpServer(EventLoop* loop,
                        InetAddress inetAddr,
-                       int maxConnection)
+                       int maxConnection,
+                       int idleSeconds)
   :server_(loop,inetAddr),
   numConnected_(0),
-  kMaxConnections_(maxConnection)
+  kMaxConnections_(maxConnection),
+  connectionBuckets_(idleSeconds)
 {
     server_.setConnectionCallback(std::bind(HttpServer::onConnection,this,_1));
     server_.setMessageCallback(std::bind(HttpServer::onMessage,this,_1,_2,_3));
+    connectionBuckets_.resize(idleSeconds);
+    loop->runEvery(1.0,std::bind(HttpServer::onTimer,this));
 }
 
 HttpServer::~HttpServer()
 {
 
+}
+void HttpServer::onTimer()
+{
+  connectionBuckets_.push_back(Bucket());
 }
 
 void HttpServer::setNumThread(int numThread)
@@ -45,7 +54,10 @@ void HttpServer::onConnection(TcpConnectionPtr& conn)
         }
         else
         {
-            conn->setContext(new HttpContext());
+            EntryPtr entry(new Entry(conn));
+            connectionBuckets_.back().insert(entry);
+            WeakEntryPtr weakEntry(entry);
+            conn->setContext(new SavedData(new HttpContext(),weakEntry));
         }
     }
     else
@@ -56,7 +68,14 @@ void HttpServer::onConnection(TcpConnectionPtr& conn)
 
 void HttpServer::onMessage(TcpConnectionPtr& conn,Buffer* buffer,Timestamp receiveTime)
 {
-    HttpContext* httpContext=boost::any_cast<HttpContext>(conn->getMutableContext());
+    SavedData* savedData=boost::any_cast<SavedData>(conn->getMutableContext());
+    HttpContext* httpContext=savedData->httpContext_;
+    WeakEntryPtr weakEntry=savedData->weakConn_;
+    EntryPtr entry(weakEntry.lock());
+    if(entry)
+    {
+        connectionBuckets_.back().insert(entry);
+    }
     if(!httpContext->parseRequest(buffer,receiveTime))
     {
         conn->send("HTTP/1.1 400 Bad Request\r\n\r\n");
